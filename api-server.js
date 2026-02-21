@@ -110,50 +110,51 @@ app.post('/api/generate-video', async (req, res) => {
 
     console.log('Generating video with Gemini Veo 2...', { sceneTitle, prompt: prompt.substring(0, 100) })
 
-    const { GoogleGenerativeAI } = require('@google/generative-ai')
-    const genAI = new GoogleGenerativeAI(apiKey)
-    
-    const model = genAI.getGenerativeModel({ 
-      model: "veo-2.0-generate-001"
+    // Use the new Google GenAI SDK for video generation
+    const { GoogleGenAI } = require('@google/genai')
+    const ai = new GoogleGenAI({ apiKey })
+
+    // Start video generation (async operation)
+    const operation = await ai.models.generateVideos({
+      model: 'veo-2.0-generate-001',
+      prompt: prompt.substring(0, 500), // Limit prompt length
+      config: {
+        personGeneration: 'dont_allow',
+        aspectRatio: '16:9',
+      },
     })
 
-    const result = await model.generateContent({
-      contents: [{
-        role: 'user',
-        parts: [{
-          text: `Generate an 8-second cinematic video scene: ${prompt}`
-        }]
-      }],
-      generationConfig: {
-        responseModalities: ['video'],
-      }
-    })
+    console.log('Video generation started, polling for completion...')
 
-    const response = await result.response
-    
-    if (response.candidates && response.candidates[0]) {
-      const candidate = response.candidates[0]
-      if (candidate.content && candidate.content.parts) {
-        for (const part of candidate.content.parts) {
-          if (part.fileData) {
-            console.log('Video generated successfully!')
-            return res.status(200).json({
-              success: true,
-              videoUrl: part.fileData.fileUri,
-              mimeType: part.fileData.mimeType,
-              sceneTitle
-            })
-          }
-          if (part.inlineData) {
-            console.log('Video generated successfully (inline)!')
-            return res.status(200).json({
-              success: true,
-              videoData: part.inlineData.data,
-              mimeType: part.inlineData.mimeType,
-              sceneTitle
-            })
-          }
-        }
+    // Poll for completion (max 5 minutes)
+    let attempts = 0
+    const maxAttempts = 30
+    let currentOperation = operation
+
+    while (!currentOperation.done && attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 10000)) // Wait 10 seconds
+      currentOperation = await ai.operations.get(currentOperation)
+      attempts++
+      console.log(`Polling attempt ${attempts}/${maxAttempts}...`)
+    }
+
+    if (!currentOperation.done) {
+      throw new Error('Video generation timed out')
+    }
+
+    if (currentOperation.response && currentOperation.response.generatedVideos) {
+      const video = currentOperation.response.generatedVideos[0]
+      if (video && video.video) {
+        // Download the video file
+        const videoFile = await ai.files.download({ file: video.video })
+        
+        console.log('Video generated successfully!')
+        return res.status(200).json({
+          success: true,
+          videoUrl: video.video.uri || videoFile.uri,
+          mimeType: 'video/mp4',
+          sceneTitle
+        })
       }
     }
 

@@ -17,6 +17,7 @@
     "sanity"
   ],
   "dependencies": {
+    "@google/genai": "^1.42.0",
     "@google/generative-ai": "^0.24.1",
     "@sanity/asset-utils": "^1.3.0",
     "@sanity/color-input": "^3.0.2",
