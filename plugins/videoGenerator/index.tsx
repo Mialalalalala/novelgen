@@ -17,14 +17,14 @@ import {
   Text,
   TextArea,
   TextInput,
+  Select,
 } from '@sanity/ui'
 
 const generateVideoAction: DocumentActionComponent = (props: DocumentActionProps) => {
   const {id, type, draft, published} = props
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
-  const [scenePrompt, setScenePrompt] = useState('')
-  const [sceneTitle, setSceneTitle] = useState('')
+  const [sceneType, setSceneType] = useState('opening')
   const [status, setStatus] = useState('')
   const client = useClient({apiVersion: '2024-01-01'})
 
@@ -45,19 +45,83 @@ const generateVideoAction: DocumentActionComponent = (props: DocumentActionProps
     return id?.startsWith('drafts.') ? id : `drafts.${id}`
   }
 
-  const generateScenePrompt = () => {
-    if (!doc) return ''
+  // Extract text from portable text blocks
+  const extractTextFromContent = (content: any[]): string => {
+    if (!content || !Array.isArray(content)) return ''
+    
+    return content
+      .filter((block: any) => block._type === 'block')
+      .map((block: any) => {
+        if (block.children) {
+          return block.children
+            .filter((child: any) => child._type === 'span')
+            .map((child: any) => child.text)
+            .join('')
+        }
+        return ''
+      })
+      .join('\n')
+      .substring(0, 2000) // Limit to first 2000 chars
+  }
+
+  // Generate scene prompt based on novel content and scene type
+  const generateScenePrompt = (type: string): { title: string; prompt: string } => {
+    if (!doc) return { title: 'Scene', prompt: '' }
     
     const title = (doc as any).title || 'Untitled Novel'
     const genre = (doc as any).genre || 'general'
     const description = (doc as any).description || ''
+    const content = extractTextFromContent((doc as any).content || [])
     
-    return `A cinematic scene from "${title}", a ${genre} novel. ${description}. High quality, dramatic lighting, movie-like cinematography.`
+    const genreStyles: Record<string, string> = {
+      'fantasy': 'magical, ethereal lighting, fantasy world, mystical atmosphere',
+      'sci-fi': 'futuristic, neon lights, high-tech environment, cyberpunk aesthetic',
+      'romance': 'warm lighting, intimate atmosphere, soft focus, emotional mood',
+      'mystery': 'dark shadows, noir style, suspenseful atmosphere, dramatic lighting',
+      'thriller': 'intense, high contrast, fast-paced, tension-filled atmosphere',
+      'horror': 'dark, eerie, unsettling atmosphere, shadows and mist',
+      'literary': 'artistic, contemplative, beautiful cinematography, emotional depth',
+    }
+    
+    const style = genreStyles[genre] || 'cinematic, high quality, dramatic lighting'
+    
+    const sceneConfigs: Record<string, { title: string; promptPrefix: string }> = {
+      'opening': {
+        title: 'Opening Scene',
+        promptPrefix: 'The opening scene introducing the story:'
+      },
+      'climax': {
+        title: 'Climax',
+        promptPrefix: 'The dramatic climax of the story:'
+      },
+      'ending': {
+        title: 'Ending Scene',
+        promptPrefix: 'The emotional ending of the story:'
+      },
+      'key_moment': {
+        title: 'Key Moment',
+        promptPrefix: 'A pivotal moment in the story:'
+      }
+    }
+    
+    const config = sceneConfigs[type] || sceneConfigs['opening']
+    
+    // Build the prompt from novel content
+    const prompt = `${config.promptPrefix} "${title}" - a ${genre} novel. 
+${description ? `Story: ${description}` : ''}
+${content ? `Context: ${content.substring(0, 500)}...` : ''}
+
+Visual style: ${style}. 
+8-second cinematic video, movie-quality, professional cinematography.`
+
+    return { title: config.title, prompt }
   }
 
   const handleGenerate = async () => {
+    const { title: sceneTitle, prompt: scenePrompt } = generateScenePrompt(sceneType)
+    
     if (!scenePrompt.trim()) {
-      setStatus('Please enter a scene description')
+      setStatus('No novel content found. Please add content first.')
       return
     }
 
@@ -65,6 +129,7 @@ const generateVideoAction: DocumentActionComponent = (props: DocumentActionProps
     setStatus('Generating video with Gemini Veo 2...')
 
     try {
+      const { title: sceneTitle, prompt: scenePrompt } = generateScenePrompt(sceneType)
       const API_URL = (import.meta as any).env?.SANITY_STUDIO_VIDEO_API_URL || 'http://localhost:3000/api/generate-video'
       
       const response = await fetch(API_URL, {
@@ -74,7 +139,7 @@ const generateVideoAction: DocumentActionComponent = (props: DocumentActionProps
         },
         body: JSON.stringify({
           prompt: scenePrompt,
-          sceneTitle: sceneTitle || 'Scene',
+          sceneTitle: sceneTitle,
         }),
       })
 
@@ -124,8 +189,6 @@ const generateVideoAction: DocumentActionComponent = (props: DocumentActionProps
       }
 
       setStatus('Video scene added successfully!')
-      setScenePrompt('')
-      setSceneTitle('')
       
       setTimeout(() => {
         setIsDialogOpen(false)
@@ -140,13 +203,15 @@ const generateVideoAction: DocumentActionComponent = (props: DocumentActionProps
     }
   }
 
+  const novelTitle = (doc as any)?.title || 'Untitled'
+  const hasContent = (doc as any)?.content && (doc as any).content.length > 0
+
   return {
     label: 'Generate Video Scene',
     icon: PlayIcon,
     shortcut: 'Ctrl+Alt+V',
     onHandle: () => {
-      setScenePrompt(generateScenePrompt())
-      setSceneTitle('')
+      setSceneType('opening')
       setStatus('')
       setIsDialogOpen(true)
     },
@@ -161,29 +226,46 @@ const generateVideoAction: DocumentActionComponent = (props: DocumentActionProps
                   Generate AI Video Scene
                 </Text>
                 <Text size={1} muted>
-                  Use Gemini Veo 2 to generate an 8-second video scene from your novel
+                  Automatically generate an 8-second video from "{novelTitle}"
                 </Text>
 
-                <Stack space={2}>
-                  <Text size={1} weight="semibold">Scene Title</Text>
-                  <TextInput
-                    value={sceneTitle}
-                    onChange={(e) => setSceneTitle(e.currentTarget.value)}
-                    placeholder="e.g., Opening Scene, Climax, Ending..."
-                    disabled={isGenerating}
-                  />
-                </Stack>
+                {!hasContent && (
+                  <Card padding={3} radius={2} tone="caution">
+                    <Text size={1}>
+                      This novel has no content yet. Please generate or add content first.
+                    </Text>
+                  </Card>
+                )}
 
                 <Stack space={2}>
-                  <Text size={1} weight="semibold">Scene Description (Prompt)</Text>
-                  <TextArea
-                    value={scenePrompt}
-                    onChange={(e) => setScenePrompt(e.currentTarget.value)}
-                    rows={5}
-                    placeholder="Describe the scene you want to generate..."
+                  <Text size={1} weight="semibold">Select Scene Type</Text>
+                  <select
+                    value={sceneType}
+                    onChange={(e) => setSceneType(e.target.value)}
                     disabled={isGenerating}
-                  />
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      borderRadius: '4px',
+                      border: '1px solid #ccc',
+                      fontSize: '14px',
+                    }}
+                  >
+                    <option value="opening">Opening Scene - Story introduction</option>
+                    <option value="climax">Climax - Dramatic peak moment</option>
+                    <option value="ending">Ending Scene - Story conclusion</option>
+                    <option value="key_moment">Key Moment - Pivotal scene</option>
+                  </select>
                 </Stack>
+
+                <Card padding={3} radius={2} tone="primary" style={{ background: '#f0f4ff' }}>
+                  <Text size={1}>
+                    The video will be automatically generated based on:
+                    <br />• Novel title: {novelTitle}
+                    <br />• Genre: {(doc as any)?.genre || 'general'}
+                    <br />• Story content
+                  </Text>
+                </Card>
 
                 {status && (
                   <Card padding={3} radius={2} tone={status.includes('Error') ? 'critical' : 'positive'}>
@@ -205,7 +287,7 @@ const generateVideoAction: DocumentActionComponent = (props: DocumentActionProps
                     tone="primary"
                     text={isGenerating ? 'Generating...' : 'Generate Video'}
                     onClick={handleGenerate}
-                    disabled={isGenerating || !scenePrompt.trim()}
+                    disabled={isGenerating || !hasContent}
                     icon={isGenerating ? Spinner : PlayIcon}
                   />
                 </Flex>
