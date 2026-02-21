@@ -332,7 +332,7 @@
             currency,
             genre,
             author,
-            wordCount,
+            scenes,
             "coverUrl": coverImage.asset->url
           }
         `, { id: novelId })
@@ -351,10 +351,32 @@
           </div>
           <div style="margin-bottom: 15px;">
             <strong>Author:</strong> ${novel.author || 'Unknown'}<br>
-            <strong>Genre:</strong> ${novel.genre || 'General'}<br>
-            <strong>Word Count:</strong> ${novel.wordCount || 0} words
+            <strong>Genre:</strong> ${novel.genre || 'General'}
           </div>
           ${novel.description ? `<p style="margin-bottom: 20px; color: #666;">${novel.description}</p>` : ''}
+          
+          ${novel.scenes && novel.scenes.length > 0 ? `
+            <div style="margin: 20px 0;">
+              <h3 style="margin-bottom: 15px;">🎬 AI Generated Scenes</h3>
+              <div style="display: grid; gap: 15px;">
+                ${novel.scenes.filter(s => s.status === 'completed' && s.videoUrl).map(scene => `
+                  <div style="background: #f5f5f5; border-radius: 8px; padding: 15px;">
+                    <h4 style="margin: 0 0 10px 0;">${scene.title || 'Scene'}</h4>
+                    <video 
+                      controls 
+                      style="width: 100%; border-radius: 8px; max-height: 300px;"
+                      poster="https://via.placeholder.com/640x360?text=Loading+Video..."
+                    >
+                      <source src="${scene.videoUrl}" type="video/mp4">
+                      Your browser does not support video playback.
+                    </video>
+                    ${scene.description ? `<p style="margin: 10px 0 0 0; font-size: 14px; color: #666;">${scene.description}</p>` : ''}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+          
           <div class="novel-content" id="novel-content"></div>
           <div class="purchase-form">
             <h3 style="margin-bottom: 15px;">Purchase Novel</h3>

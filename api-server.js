@@ -92,19 +92,101 @@ app.post('/api/generate-novel', async (req, res) => {
   }
 })
 
+// Video Generation Endpoint using Gemini Veo 2
+app.post('/api/generate-video', async (req, res) => {
+  try {
+    const { prompt, sceneTitle } = req.body
+
+    if (!prompt) {
+      return res.status(400).json({ error: 'Prompt is required' })
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) {
+      return res.status(500).json({ 
+        error: 'Gemini API key not configured. Please set GEMINI_API_KEY in .env file.' 
+      })
+    }
+
+    console.log('Generating video with Gemini Veo 2...', { sceneTitle, prompt: prompt.substring(0, 100) })
+
+    const { GoogleGenerativeAI } = require('@google/generative-ai')
+    const genAI = new GoogleGenerativeAI(apiKey)
+    
+    const model = genAI.getGenerativeModel({ 
+      model: "veo-2.0-generate-001"
+    })
+
+    const result = await model.generateContent({
+      contents: [{
+        role: 'user',
+        parts: [{
+          text: `Generate an 8-second cinematic video scene: ${prompt}`
+        }]
+      }],
+      generationConfig: {
+        responseModalities: ['video'],
+      }
+    })
+
+    const response = await result.response
+    
+    if (response.candidates && response.candidates[0]) {
+      const candidate = response.candidates[0]
+      if (candidate.content && candidate.content.parts) {
+        for (const part of candidate.content.parts) {
+          if (part.fileData) {
+            console.log('Video generated successfully!')
+            return res.status(200).json({
+              success: true,
+              videoUrl: part.fileData.fileUri,
+              mimeType: part.fileData.mimeType,
+              sceneTitle
+            })
+          }
+          if (part.inlineData) {
+            console.log('Video generated successfully (inline)!')
+            return res.status(200).json({
+              success: true,
+              videoData: part.inlineData.data,
+              mimeType: part.inlineData.mimeType,
+              sceneTitle
+            })
+          }
+        }
+      }
+    }
+
+    throw new Error('No video generated from API response')
+
+  } catch (error) {
+    console.error('Error generating video:', error)
+    res.status(500).json({ 
+      error: error.message || 'Failed to generate video' 
+    })
+  }
+})
+
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
-    message: 'AI Novel Generation API is running',
-    provider: 'OpenAI'
+    message: 'AI Novel & Video Generation API is running',
+    providers: {
+      novel: 'OpenAI',
+      video: 'Gemini Veo 2'
+    }
   })
 })
 
 app.listen(PORT, () => {
-  console.log(`🚀 AI Novel Generation API server running on http://localhost:${PORT}`)
-  console.log(`📝 Using OpenAI API`)
-  console.log(`🔑 Make sure OPENAI_API_KEY is set in .env file`)
+  console.log(`🚀 AI API server running on http://localhost:${PORT}`)
+  console.log(`📝 Novel Generation: OpenAI`)
+  console.log(`🎬 Video Generation: Gemini Veo 2`)
+  console.log(`🔑 Required env vars: OPENAI_API_KEY, GEMINI_API_KEY`)
   if (!process.env.OPENAI_API_KEY) {
-    console.warn('⚠️  WARNING: OPENAI_API_KEY not found in environment variables!')
+    console.warn('⚠️  WARNING: OPENAI_API_KEY not found!')
+  }
+  if (!process.env.GEMINI_API_KEY) {
+    console.warn('⚠️  WARNING: GEMINI_API_KEY not found!')
   }
 })

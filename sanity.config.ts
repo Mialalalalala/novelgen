@@ -10,6 +10,7 @@ import {imageHotspotArrayPlugin} from 'sanity-plugin-hotspot-array'
 import {media, mediaAssetSource} from 'sanity-plugin-media'
 import {customDocumentActions} from './plugins/customDocumentActions'
 import {aiNovelGenerator} from './plugins/aiNovelGenerator/plugin'
+import {videoGenerator} from './plugins/videoGenerator/plugin'
 import Navbar from './components/studio/Navbar'
 
 const devOnlyPlugins = [visionTool()]
@@ -28,6 +29,7 @@ export default defineConfig({
     customDocumentActions(),
     media(),
     aiNovelGenerator(),
+    videoGenerator(),
     ...(isDev ? devOnlyPlugins : []),
   ],
 

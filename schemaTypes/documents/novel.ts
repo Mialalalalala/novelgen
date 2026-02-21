@@ -112,6 +112,60 @@ export const novelType = defineType({
       title: 'Published At',
       type: 'datetime',
     }),
+    defineField({
+      name: 'scenes',
+      title: 'AI Generated Scenes',
+      type: 'array',
+      of: [
+        {
+          type: 'object',
+          fields: [
+            {
+              name: 'title',
+              title: 'Scene Title',
+              type: 'string',
+            },
+            {
+              name: 'description',
+              title: 'Scene Description',
+              type: 'text',
+              rows: 2,
+            },
+            {
+              name: 'videoUrl',
+              title: 'Video URL',
+              type: 'url',
+            },
+            {
+              name: 'status',
+              title: 'Status',
+              type: 'string',
+              options: {
+                list: [
+                  {title: 'Pending', value: 'pending'},
+                  {title: 'Generating', value: 'generating'},
+                  {title: 'Completed', value: 'completed'},
+                  {title: 'Failed', value: 'failed'},
+                ],
+              },
+            },
+          ],
+          preview: {
+            select: {
+              title: 'title',
+              status: 'status',
+            },
+            prepare({title, status}) {
+              return {
+                title: title || 'Untitled Scene',
+                subtitle: status || 'pending',
+              }
+            },
+          },
+        },
+      ],
+      description: 'AI-generated video scenes from the novel',
+    }),
   ],
   preview: {
     select: {

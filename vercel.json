@@ -6,14 +6,22 @@
       "use": "@vercel/node"
     },
     {
+      "src": "api/generate-video.js",
+      "use": "@vercel/node"
+    },
+    {
       "src": "frontend/**",
       "use": "@vercel/static"
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
+      "src": "/api/generate-novel",
       "dest": "/api/generate-novel.js"
+    },
+    {
+      "src": "/api/generate-video",
+      "dest": "/api/generate-video.js"
     },
     {
       "src": "/(.*)",
