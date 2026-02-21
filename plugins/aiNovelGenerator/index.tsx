@@ -66,13 +66,13 @@ export default (props: any): DocumentActionDescription | undefined => {
                 fontSize: '14px',
               }}
             >
-              <option value="fantasy">Fantasy</option>
-              <option value="sci-fi">Science Fiction</option>
-              <option value="romance">Romance</option>
-              <option value="mystery">Mystery</option>
-              <option value="thriller">Thriller</option>
-              <option value="horror">Horror</option>
-              <option value="literary">Literary</option>
+              <option value="urban-revenge">都市逆袭 (职场复仇/商战)</option>
+              <option value="ancient-palace">古代宫廷 (宫斗/权谋)</option>
+              <option value="cultivation">玄幻修仙 (女强/逆袭)</option>
+              <option value="ceo-romance">豪门总裁 (独立女主)</option>
+              <option value="rebirth">重生复仇 (打脸爽文)</option>
+              <option value="entertainment">娱乐圈 (逆袭成名)</option>
+              <option value="mystery">悬疑推理 (女侦探)</option>
             </select>
           </div>
           <div>
@@ -100,7 +100,31 @@ export default (props: any): DocumentActionDescription | undefined => {
       }
 
       const targetWords = parseInt(wordCount) || 1000
-      const promptText = `Write a ${genre} novel titled "${title}". The novel should be approximately ${targetWords} words long. Make it engaging and well-written.`
+      
+      const genreDescriptions: Record<string, string> = {
+        'urban-revenge': '都市逆袭爽文，女主在职场/商战中被陷害后绝地反击，一路打脸白莲花和渣男，最终走上人生巅峰',
+        'ancient-palace': '古代宫廷权谋文，女主凭借智慧在后宫/朝堂中步步为营，揭穿阴谋，打脸对手，成为人生赢家',
+        'cultivation': '玄幻修仙女强文，女主从废柴逆袭成强者，一路碾压天才，打脸看不起她的人',
+        'ceo-romance': '豪门总裁文，但女主独立自强，不做花瓶，靠自己能力赢得尊重和爱情',
+        'rebirth': '重生复仇爽文，女主带着前世记忆重生，一一打脸害过她的人，改写命运',
+        'entertainment': '娱乐圈逆袭文，女主从小透明成长为巨星，打脸黑粉和绿茶，走向人生巅峰',
+        'mystery': '悬疑推理文，女主是聪明冷静的侦探/律师，靠智慧破案，打脸质疑她的人',
+      }
+      
+      const genreDesc = genreDescriptions[genre] || '大女主逆袭爽文'
+      const promptText = `请创作一篇大女主风格的小说，标题是《${title}》。
+
+类型：${genreDesc}
+
+要求：
+- 字数约${targetWords}字
+- 女主必须聪明、独立、有主见
+- 要有明显的爽点和打脸情节
+- 节奏要快，高潮迭起
+- 语言现代化，对话接地气
+- 让读者看得过瘾！
+
+请直接开始写正文内容。`
 
       try {
         toast.push({
