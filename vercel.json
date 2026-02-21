@@ -2,11 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/generate-novel.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "api/generate-video.js",
+      "src": "api/*.js",
       "use": "@vercel/node"
     },
     {
@@ -20,8 +16,12 @@
       "dest": "/api/generate-novel.js"
     },
     {
-      "src": "/api/generate-video",
-      "dest": "/api/generate-video.js"
+      "src": "/api/generate-image",
+      "dest": "/api/generate-image.js"
+    },
+    {
+      "src": "/api/chat",
+      "dest": "/api/chat.js"
     },
     {
       "src": "/(.*)",
