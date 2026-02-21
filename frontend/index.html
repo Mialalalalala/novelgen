@@ -507,11 +507,12 @@
             <!-- Image Generation -->
             <div class="feature-card">
               <h3>🎨 生成场景图</h3>
+              <p style="font-size: 12px; margin-bottom: 10px; opacity: 0.9;">根据小说内容生成专属插图</p>
               <input 
                 type="text" 
                 id="scene-prompt-${novel._id}"
                 class="feature-input" 
-                placeholder="描述你想看的场景，如：女主霸气打脸白莲花..."
+                placeholder="输入想看的场景，如：女主逆袭打脸、深情告白..."
               />
               <button 
                 class="feature-btn" 
@@ -706,8 +707,8 @@
       const btn = document.getElementById(`gen-img-btn-${novelId}`)
       const container = document.getElementById(`generated-image-${novelId}`)
       
-      const prompt = promptInput.value.trim()
-      if (!prompt) {
+      const userPrompt = promptInput.value.trim()
+      if (!userPrompt) {
         alert('请输入场景描述')
         return
       }
@@ -717,14 +718,28 @@
       container.innerHTML = '<p style="color: white; font-size: 14px;">正在生成图片，请稍候...</p>'
       
       try {
-        const fullPrompt = `${novelTitle} - ${genre}风格场景：${prompt}。高质量，电影感，精美细节。`
+        // Get novel content for context
+        const novelContent = novelContents[novelId] || ''
+        
+        // Build a rich prompt with novel context
+        let fullPrompt = `小说《${novelTitle}》的场景插图。\n\n`
+        
+        if (novelContent) {
+          // Extract relevant context from novel (first 500 chars for background)
+          fullPrompt += `小说背景：${novelContent.substring(0, 500)}\n\n`
+        }
+        
+        fullPrompt += `场景描述：${userPrompt}\n\n`
+        fullPrompt += `风格要求：${genre || '大女主'}风格，高质量插画，电影感光影，精美细节，中国风/现代都市风格（根据小说类型），人物美型，画面唯美。`
         
         const response = await fetch(`${API_BASE_URL}/api/generate-image`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             prompt: fullPrompt,
-            sceneTitle: prompt.substring(0, 30)
+            sceneTitle: userPrompt.substring(0, 30),
+            novelTitle,
+            genre
           }),
         })
         
