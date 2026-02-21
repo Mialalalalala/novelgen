@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Novel Store</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      background: white;
+      padding: 20px 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    .novels-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+    .novel-card {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+    .novel-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .novel-cover {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .novel-info {
+      padding: 15px;
+    }
+    .novel-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #333;
+    }
+    .novel-author {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    .novel-genre {
+      display: inline-block;
+      background: #e0e0e0;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+    .novel-price {
+      font-size: 20px;
+      font-weight: bold;
+      color: #667eea;
+      margin-top: 10px;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      overflow-y: auto;
+    }
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      max-width: 800px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      margin: 20px;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+    }
+    .novel-content {
+      line-height: 1.8;
+      margin: 20px 0;
+    }
+    .purchase-form {
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .buy-btn {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 10px;
+    }
+    .buy-btn:hover {
+      background: #5568d3;
+    }
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>📚 AI Novel Store</h1>
+    </div>
+  </header>
+
+  <div class="container">
+    <div id="novels-container" class="loading">Loading...</div>
+  </div>
+
+  <!-- Novel Detail Modal -->
+  <div id="novel-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-title"></h2>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Import Sanity client from CDN
+    import { createClient } from 'https://esm.sh/@sanity/client@6'
+    
+    // Initialize Sanity client
+    const client = createClient({
+      projectId: '9cp0f5xw', // Replace with your Sanity project ID
+      dataset: 'production', // Replace with your dataset name
+      useCdn: true,
+      apiVersion: '2024-01-01',
+      // If you encounter CORS issues, you can add a token (need to create a read token in Sanity console first)
+      // token: 'your-read-token-here'
+    })
+    
+    // Add debug info
+    console.log('Sanity client initialized:', {
+      projectId: '9cp0f5xw',
+      dataset: 'production',
+      currentUrl: window.location.href
+    })
+    
+    // API URL - Update to actual API address when deploying
+    // Local development: 'http://localhost:3000/api/generate-novel'
+    // Production: 'https://your-project.vercel.app/api/generate-novel'
+    const API_BASE_URL = window.location.origin.includes('localhost') 
+      ? 'http://localhost:3000' 
+      : window.location.origin
+
+    // Fetch and display novels
+    async function loadNovels() {
+      try {
+        console.log('Starting to load novels...')
+        const novels = await client.fetch(`
+          *[_type == "novel"] | order(_createdAt desc) {
+            _id,
+            title,
+            slug,
+            coverImage,
+            description,
+            price,
+            currency,
+            genre,
+            author,
+            wordCount,
+            "coverUrl": coverImage.asset->url
+          }
+        `)
+        console.log('Novels fetched:', novels)
+
+        const container = document.getElementById('novels-container')
+        
+        if (novels.length === 0) {
+          container.innerHTML = '<div class="empty-state"><h2>No Novels Available</h2><p>Please create and publish novels in Sanity Studio first</p></div>'
+          return
+        }
+
+        container.className = 'novels-grid'
+        container.innerHTML = novels.map(novel => `
+          <div class="novel-card" onclick="showNovelDetail('${novel._id}')">
+            <img src="${novel.coverUrl || 'https://via.placeholder.com/280x200?text=No+Cover'}" 
+                 alt="${novel.title}" 
+                 class="novel-cover"
+                 onerror="this.style.display='none'">
+            <div class="novel-info">
+              <div class="novel-title">${novel.title || 'Untitled'}</div>
+              <div class="novel-author">${novel.author || 'Unknown Author'}</div>
+              <span class="novel-genre">${novel.genre || 'General'}</span>
+              <div class="novel-price">
+                ${getCurrencySymbol(novel.currency)}${novel.price || 0}
+              </div>
+            </div>
+          </div>
+        `).join('')
+      } catch (error) {
+        console.error('Error loading novels:', error)
+        const container = document.getElementById('novels-container')
+        container.className = 'empty-state'
+        
+        // Check if it's a CORS error
+        const isCorsError = error.message?.includes('CORS') || 
+                          error.message?.includes('Failed to fetch') ||
+                          error.message?.includes('NetworkError')
+        
+        container.innerHTML = `
+          <div class="empty-state">
+            <h2>Failed to Load</h2>
+            <p>Error: ${error.message || 'Unknown error'}</p>
+            ${isCorsError ? `
+              <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; border: 1px solid #ffc107;">
+                <h3 style="margin: 0 0 10px 0; color: #856404;">⚠️ CORS Configuration Required</h3>
+                <p style="margin: 0; color: #856404;">
+                  Your frontend domain needs to be added to Sanity's CORS settings.<br><br>
+                  <strong>Steps to fix:</strong><br>
+                  1. Go to <a href="https://www.sanity.io/manage" target="_blank">https://www.sanity.io/manage</a><br>
+                  2. Select project: <strong>9cp0f5xw</strong><br>
+                  3. Go to <strong>API</strong> > <strong>CORS origins</strong><br>
+                  4. Add: <strong>${window.location.origin}</strong><br>
+                  5. Check <strong>Allow credentials</strong><br>
+                  6. Click <strong>Save</strong><br>
+                  7. Refresh this page
+                </p>
+              </div>
+            ` : ''}
+            <p style="margin-top: 10px; font-size: 12px; color: #666;">
+              Please check:<br>
+              1. Sanity Project ID is correct<br>
+              2. Dataset name is correct<br>
+              3. CORS settings are correct<br>
+              4. Browser console for more error details
+            </p>
+            <p style="margin-top: 10px; font-size: 12px;">
+              <strong>Debug Info:</strong><br>
+              Project ID: 9cp0f5xw<br>
+              Dataset: production<br>
+              Current URL: ${window.location.href}<br>
+              Origin: ${window.location.origin}
+            </p>
+          </div>
+        `
+      }
+    }
+
+    // Show novel detail
+    async function showNovelDetail(novelId) {
+      try {
+        const novel = await client.fetch(`
+          *[_type == "novel" && _id == $id][0] {
+            _id,
+            title,
+            slug,
+            coverImage,
+            description,
+            content,
+            price,
+            currency,
+            genre,
+            author,
+            wordCount,
+            "coverUrl": coverImage.asset->url
+          }
+        `, { id: novelId })
+
+        if (!novel) {
+          alert('Novel not found')
+          return
+        }
+
+        document.getElementById('modal-title').textContent = novel.title || 'Untitled'
+        
+        const modalBody = document.getElementById('modal-body')
+        modalBody.innerHTML = `
+          <div style="text-align: center; margin-bottom: 20px;">
+            ${novel.coverUrl ? `<img src="${novel.coverUrl}" alt="${novel.title}" style="max-width: 200px; border-radius: 8px;">` : ''}
+          </div>
+          <div style="margin-bottom: 15px;">
+            <strong>Author:</strong> ${novel.author || 'Unknown'}<br>
+            <strong>Genre:</strong> ${novel.genre || 'General'}<br>
+            <strong>Word Count:</strong> ${novel.wordCount || 0} words
+          </div>
+          ${novel.description ? `<p style="margin-bottom: 20px; color: #666;">${novel.description}</p>` : ''}
+          <div class="novel-content" id="novel-content"></div>
+          <div class="purchase-form">
+            <h3 style="margin-bottom: 15px;">Purchase Novel</h3>
+            <form id="purchase-form" onsubmit="handlePurchase(event, '${novel._id}', ${novel.price}, '${novel.currency}')">
+              <div class="form-group">
+                <label>Name *</label>
+                <input type="text" name="name" required>
+              </div>
+              <div class="form-group">
+                <label>Email *</label>
+                <input type="email" name="email" required>
+              </div>
+              <div class="form-group">
+                <label>Payment Method</label>
+                <select name="paymentMethod" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                  <option value="credit_card">Credit Card</option>
+                  <option value="paypal">PayPal</option>
+                  <option value="bank_transfer">Bank Transfer</option>
+                </select>
+              </div>
+              <div style="text-align: center; margin-top: 15px;">
+                <strong style="font-size: 24px; color: #667eea;">
+                  ${getCurrencySymbol(novel.currency)}${novel.price || 0}
+                </strong>
+              </div>
+              <button type="submit" class="buy-btn">Buy Now</button>
+            </form>
+          </div>
+        `
+
+        // Render novel content
+        if (novel.content && novel.content.length > 0) {
+          renderContent(novel.content, document.getElementById('novel-content'))
+        } else {
+          document.getElementById('novel-content').innerHTML = '<p style="color: #999;">No content available</p>'
+        }
+
+        document.getElementById('novel-modal').classList.add('active')
+      } catch (error) {
+        console.error('Error loading novel:', error)
+        alert('Failed to load novel details')
+      }
+    }
+
+    // Render Sanity portable text content
+    function renderContent(blocks, container) {
+      if (!blocks || blocks.length === 0) return
+      
+      blocks.forEach(block => {
+        if (block._type === 'block') {
+          const tag = block.style === 'h1' ? 'h2' : block.style === 'h2' ? 'h3' : 'p'
+          const element = document.createElement(tag)
+          
+          if (block.children) {
+            block.children.forEach(child => {
+              if (child._type === 'span') {
+                const text = document.createTextNode(child.text)
+                element.appendChild(text)
+              }
+            })
+          }
+          
+          container.appendChild(element)
+        }
+      })
+    }
+
+    // Handle purchase
+    async function handlePurchase(event, novelId, price, currency) {
+      event.preventDefault()
+      const form = event.target
+      const formData = new FormData(form)
+      
+      const orderData = {
+        _type: 'order',
+        novel: {
+          _type: 'reference',
+          _ref: novelId
+        },
+        customerName: formData.get('name'),
+        customerEmail: formData.get('email'),
+        amount: price,
+        currency: currency,
+        paymentMethod: formData.get('paymentMethod'),
+        status: 'pending',
+        purchasedAt: new Date().toISOString()
+      }
+
+      try {
+        // In a real app, you would send this to a backend API
+        // For this minimal example, we'll just show an alert
+        alert(`Order submitted!\n\nName: ${orderData.customerName}\nEmail: ${orderData.customerEmail}\nAmount: ${getCurrencySymbol(currency)}${price}\n\nNote: This is a minimal example. In production, you need to integrate a payment gateway.`)
+        
+        // Optionally, you can create the order in Sanity
+        // await client.create(orderData)
+        
+        closeModal()
+      } catch (error) {
+        console.error('Error creating order:', error)
+        alert('Failed to submit order. Please try again.')
+      }
+    }
+
+    // Close modal
+    function closeModal() {
+      document.getElementById('novel-modal').classList.remove('active')
+    }
+
+    // Get currency symbol
+    function getCurrencySymbol(currency) {
+      const symbols = {
+        'USD': '$',
+        'CNY': '¥',
+        'EUR': '€'
+      }
+      return symbols[currency] || '$'
+    }
+
+    // Close modal on outside click
+    document.getElementById('novel-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'novel-modal') {
+        closeModal()
+      }
+    })
+
+    // Make functions available globally for onclick handlers
+    window.showNovelDetail = showNovelDetail
+    window.closeModal = closeModal
+    window.handlePurchase = handlePurchase
+
+    // Load novels on page load
+    loadNovels()
+    
+    // Add timeout to show error if loading takes too long
+    setTimeout(() => {
+      const container = document.getElementById('novels-container')
+      if (container && container.classList.contains('loading')) {
+        container.className = 'empty-state'
+        container.innerHTML = `
+          <div class="empty-state">
+            <h2>Loading Timeout</h2>
+            <p>The request is taking too long. This is usually a CORS configuration issue.</p>
+            <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; border: 1px solid #ffc107;">
+              <h3 style="margin: 0 0 10px 0; color: #856404;">⚠️ CORS Configuration Required</h3>
+              <p style="margin: 0; color: #856404;">
+                <strong>Steps to fix:</strong><br>
+                1. Go to <a href="https://www.sanity.io/manage" target="_blank" style="color: #856404; text-decoration: underline;">https://www.sanity.io/manage</a><br>
+                2. Select project: <strong>9cp0f5xw</strong><br>
+                3. Go to <strong>API</strong> > <strong>CORS origins</strong><br>
+                4. Add: <strong>${window.location.origin}</strong><br>
+                5. Check <strong>Allow credentials</strong><br>
+                6. Click <strong>Save</strong><br>
+                7. Wait 10 seconds, then refresh this page
+              </p>
+            </div>
+            <p style="margin-top: 10px; font-size: 12px;">
+              <strong>Current URL:</strong> ${window.location.href}<br>
+              <strong>Origin:</strong> ${window.location.origin}
+            </p>
+            <button onclick="location.reload()" style="margin-top: 15px; padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer;">
+              Retry
+            </button>
+          </div>
+        `
+      }
+    }, 10000) // 10 second timeout
+  </script>
+</body>
+</html>

@@ -9,6 +9,7 @@ import {colorInput} from '@sanity/color-input'
 import {imageHotspotArrayPlugin} from 'sanity-plugin-hotspot-array'
 import {media, mediaAssetSource} from 'sanity-plugin-media'
 import {customDocumentActions} from './plugins/customDocumentActions'
+import {aiNovelGenerator} from './plugins/aiNovelGenerator/plugin'
 import Navbar from './components/studio/Navbar'
 
 const devOnlyPlugins = [visionTool()]
@@ -26,6 +27,7 @@ export default defineConfig({
     imageHotspotArrayPlugin(),
     customDocumentActions(),
     media(),
+    aiNovelGenerator(),
     ...(isDev ? devOnlyPlugins : []),
   ],
 

@@ -9,7 +9,9 @@
     "start": "sanity start",
     "build": "sanity build",
     "deploy": "sanity deploy",
-    "deploy-graphql": "sanity graphql deploy"
+    "deploy-graphql": "sanity graphql deploy",
+    "api": "node api-server.js",
+    "api:dev": "nodemon api-server.js"
   },
   "keywords": [
     "sanity"
@@ -28,7 +30,10 @@
     "sanity-plugin-hotspot-array": "^1.0.1",
     "sanity-plugin-media": "^2.0.5",
     "slug": "^8.2.2",
-    "styled-components": "^6.1.18"
+    "styled-components": "^6.1.18",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1"
   },
   "devDependencies": {
     "@portabletext/types": "^2.0.2",

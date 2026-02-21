@@ -94,11 +94,13 @@ const blocks = [portableTextType, portableTextSimpleType]
 
 import {collectionType} from './documents/collection'
 import {colorThemeType} from './documents/colorTheme'
+import {novelType} from './documents/novel'
+import {orderType} from './documents/order'
 import {pageType} from './documents/page'
 import {productType} from './documents/product'
 import {productVariantType} from './documents/productVariant'
 
-const documents = [collectionType, colorThemeType, pageType, productType, productVariantType]
+const documents = [collectionType, colorThemeType, novelType, orderType, pageType, productType, productVariantType]
 
 import {homeType} from './singletons/homeType'
 import {settingsType} from './singletons/settingsType'

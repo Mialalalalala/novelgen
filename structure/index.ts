@@ -32,6 +32,8 @@ const hiddenDocTypes = (listItem: ListItemBuilder) => {
     'colorTheme',
     'home',
     'media.tag',
+    'novel',
+    'order',
     'page',
     'product',
     'productVariant',
@@ -45,6 +47,15 @@ export const structure: StructureResolver = (S, context) =>
     .items([
       home(S, context),
       pages(S, context),
+      S.divider(),
+      S.listItem()
+        .title('Novels')
+        .schemaType('novel')
+        .child(S.documentTypeList('novel').title('Novels')),
+      S.listItem()
+        .title('Orders')
+        .schemaType('order')
+        .child(S.documentTypeList('order').title('Orders')),
       S.divider(),
       collections(S, context),
       products(S, context),
