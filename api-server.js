@@ -92,8 +92,8 @@ app.post('/api/generate-novel', async (req, res) => {
   }
 })
 
-// Video Generation Endpoint using Gemini Veo 2
-app.post('/api/generate-video', async (req, res) => {
+// Image Generation Endpoint using Gemini Imagen
+app.post('/api/generate-image', async (req, res) => {
   try {
     const { prompt, sceneTitle } = req.body
 
@@ -108,62 +108,72 @@ app.post('/api/generate-video', async (req, res) => {
       })
     }
 
-    console.log('Generating video with Gemini Veo 2...', { sceneTitle, prompt: prompt.substring(0, 100) })
+    console.log('Generating image with Gemini...', { sceneTitle, prompt: prompt.substring(0, 100) })
 
-    // Use the new Google GenAI SDK for video generation
-    const { GoogleGenAI } = require('@google/genai')
-    const ai = new GoogleGenAI({ apiKey })
+    const { GoogleGenerativeAI } = require('@google/generative-ai')
+    const genAI = new GoogleGenerativeAI(apiKey)
+    
+    // Use Gemini to generate image
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
 
-    // Start video generation (async operation)
-    const operation = await ai.models.generateVideos({
-      model: 'veo-2.0-generate-001',
-      prompt: prompt.substring(0, 500), // Limit prompt length
-      config: {
-        personGeneration: 'dont_allow',
-        aspectRatio: '16:9',
-      },
+    const result = await model.generateContent({
+      contents: [{
+        role: 'user',
+        parts: [{
+          text: `Generate a detailed, cinematic image for this scene: ${prompt.substring(0, 500)}`
+        }]
+      }],
+      generationConfig: {
+        responseModalities: ['image', 'text'],
+      }
     })
 
-    console.log('Video generation started, polling for completion...')
-
-    // Poll for completion (max 5 minutes)
-    let attempts = 0
-    const maxAttempts = 30
-    let currentOperation = operation
-
-    while (!currentOperation.done && attempts < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, 10000)) // Wait 10 seconds
-      currentOperation = await ai.operations.get(currentOperation)
-      attempts++
-      console.log(`Polling attempt ${attempts}/${maxAttempts}...`)
-    }
-
-    if (!currentOperation.done) {
-      throw new Error('Video generation timed out')
-    }
-
-    if (currentOperation.response && currentOperation.response.generatedVideos) {
-      const video = currentOperation.response.generatedVideos[0]
-      if (video && video.video) {
-        // Download the video file
-        const videoFile = await ai.files.download({ file: video.video })
-        
-        console.log('Video generated successfully!')
-        return res.status(200).json({
-          success: true,
-          videoUrl: video.video.uri || videoFile.uri,
-          mimeType: 'video/mp4',
-          sceneTitle
-        })
+    const response = await result.response
+    
+    // Check for image in response
+    if (response.candidates && response.candidates[0]) {
+      const parts = response.candidates[0].content?.parts || []
+      for (const part of parts) {
+        if (part.inlineData) {
+          console.log('Image generated successfully!')
+          return res.status(200).json({
+            success: true,
+            imageData: part.inlineData.data,
+            mimeType: part.inlineData.mimeType || 'image/png',
+            sceneTitle
+          })
+        }
       }
     }
 
-    throw new Error('No video generated from API response')
+    // Fallback: Use Imagen 3 model
+    console.log('Trying Imagen 3 model...')
+    const imagenModel = genAI.getGenerativeModel({ model: 'imagen-3.0-generate-002' })
+    
+    const imagenResult = await imagenModel.generateContent(prompt.substring(0, 500))
+    const imagenResponse = await imagenResult.response
+    
+    if (imagenResponse.candidates && imagenResponse.candidates[0]) {
+      const parts = imagenResponse.candidates[0].content?.parts || []
+      for (const part of parts) {
+        if (part.inlineData) {
+          console.log('Image generated with Imagen 3!')
+          return res.status(200).json({
+            success: true,
+            imageData: part.inlineData.data,
+            mimeType: part.inlineData.mimeType || 'image/png',
+            sceneTitle
+          })
+        }
+      }
+    }
+
+    throw new Error('No image generated from API response')
 
   } catch (error) {
-    console.error('Error generating video:', error)
+    console.error('Error generating image:', error)
     res.status(500).json({ 
-      error: error.message || 'Failed to generate video' 
+      error: error.message || 'Failed to generate image' 
     })
   }
 })

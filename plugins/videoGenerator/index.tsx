@@ -1,4 +1,4 @@
-import {PlayIcon} from '@sanity/icons'
+import {ImageIcon} from '@sanity/icons'
 import {useState} from 'react'
 import {
   DocumentActionComponent,
@@ -126,11 +126,11 @@ Visual style: ${style}.
     }
 
     setIsGenerating(true)
-    setStatus('Generating video with Gemini Veo 2...')
+    setStatus('Generating image with Gemini AI...')
 
     try {
       const { title: sceneTitle, prompt: scenePrompt } = generateScenePrompt(sceneType)
-      const API_URL = (import.meta as any).env?.SANITY_STUDIO_VIDEO_API_URL || 'http://localhost:3000/api/generate-video'
+      const API_URL = (import.meta as any).env?.SANITY_STUDIO_IMAGE_API_URL || 'http://localhost:3000/api/generate-image'
       
       const response = await fetch(API_URL, {
         method: 'POST',
@@ -145,27 +145,27 @@ Visual style: ${style}.
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Video generation failed')
+        throw new Error(errorData.error || 'Image generation failed')
       }
 
       const data = await response.json()
       
       if (!data.success) {
-        throw new Error(data.error || 'No video generated')
+        throw new Error(data.error || 'No image generated')
       }
 
-      setStatus('Video generated! Saving to document...')
+      setStatus('Image generated! Saving to document...')
 
       // Get current scenes or empty array
       const currentDoc = await client.fetch(`*[_id == $id][0]{ scenes }`, { id: getDocumentId() })
       const currentScenes = currentDoc?.scenes || []
 
-      // Add new scene
+      // Add new scene with image
       const newScene = {
         _key: Date.now().toString(),
         title: sceneTitle || 'Generated Scene',
         description: scenePrompt,
-        videoUrl: data.videoUrl || `data:${data.mimeType};base64,${data.videoData}`,
+        imageUrl: data.imageUrl || `data:${data.mimeType};base64,${data.imageData}`,
         status: 'completed',
       }
 
@@ -188,7 +188,7 @@ Visual style: ${style}.
           .commit()
       }
 
-      setStatus('Video scene added successfully!')
+      setStatus('Scene image added successfully!')
       
       setTimeout(() => {
         setIsDialogOpen(false)
@@ -207,9 +207,9 @@ Visual style: ${style}.
   const hasContent = (doc as any)?.content && (doc as any).content.length > 0
 
   return {
-    label: 'Generate Video Scene',
-    icon: PlayIcon,
-    shortcut: 'Ctrl+Alt+V',
+    label: 'Generate Scene Image',
+    icon: ImageIcon,
+    shortcut: 'Ctrl+Alt+I',
     onHandle: () => {
       setSceneType('opening')
       setStatus('')
@@ -223,10 +223,10 @@ Visual style: ${style}.
             <Box padding={4}>
               <Stack space={4}>
                 <Text size={2} weight="bold">
-                  Generate AI Video Scene
+                  Generate AI Scene Image
                 </Text>
                 <Text size={1} muted>
-                  Automatically generate an 8-second video from "{novelTitle}"
+                  Automatically generate a scene image from "{novelTitle}"
                 </Text>
 
                 {!hasContent && (
@@ -260,7 +260,7 @@ Visual style: ${style}.
 
                 <Card padding={3} radius={2} tone="primary" style={{ background: '#f0f4ff' }}>
                   <Text size={1}>
-                    The video will be automatically generated based on:
+                    The image will be automatically generated based on:
                     <br />• Novel title: {novelTitle}
                     <br />• Genre: {(doc as any)?.genre || 'general'}
                     <br />• Story content
@@ -285,10 +285,10 @@ Visual style: ${style}.
                   />
                   <Button
                     tone="primary"
-                    text={isGenerating ? 'Generating...' : 'Generate Video'}
+                    text={isGenerating ? 'Generating...' : 'Generate Image'}
                     onClick={handleGenerate}
                     disabled={isGenerating || !hasContent}
-                    icon={isGenerating ? Spinner : PlayIcon}
+                    icon={isGenerating ? Spinner : ImageIcon}
                   />
                 </Flex>
               </Stack>

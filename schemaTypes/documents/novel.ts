@@ -132,9 +132,9 @@ export const novelType = defineType({
               rows: 2,
             },
             {
-              name: 'videoUrl',
-              title: 'Video URL',
-              type: 'url',
+              name: 'imageUrl',
+              title: 'Image URL',
+              type: 'text',
             },
             {
               name: 'status',
@@ -164,7 +164,7 @@ export const novelType = defineType({
           },
         },
       ],
-      description: 'AI-generated video scenes from the novel',
+      description: 'AI-generated scene images from the novel',
     }),
   ],
   preview: {
