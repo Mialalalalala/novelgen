@@ -606,8 +606,11 @@
         // Render novel content
         if (novel.content && novel.content.length > 0) {
           renderContent(novel.content, document.getElementById('novel-content'))
+          // Store content as plain text for chat context
+          novelContents[novel._id] = extractTextFromBlocks(novel.content)
         } else {
           document.getElementById('novel-content').innerHTML = '<p style="color: #999;">No content available</p>'
+          novelContents[novel._id] = ''
         }
 
         document.getElementById('novel-modal').classList.add('active')
@@ -615,6 +618,21 @@
         console.error('Error loading novel:', error)
         alert('Failed to load novel details')
       }
+    }
+
+    // Extract plain text from portable text blocks
+    function extractTextFromBlocks(blocks) {
+      if (!blocks || blocks.length === 0) return ''
+      
+      return blocks.map(block => {
+        if (block._type === 'block' && block.children) {
+          return block.children
+            .filter(child => child._type === 'span')
+            .map(child => child.text)
+            .join('')
+        }
+        return ''
+      }).join('\n')
     }
 
     // Render Sanity portable text content
@@ -678,6 +696,9 @@
 
     // Store chat history per novel
     const chatHistories = {}
+    
+    // Store novel content for chat context
+    const novelContents = {}
     
     // Generate Scene Image
     async function generateSceneImage(novelId, novelTitle, genre) {
@@ -785,6 +806,7 @@
             message,
             novelTitle,
             genre,
+            novelContent: novelContents[novelId] || '',
             chatHistory: chatHistories[novelId]
           }),
         })
