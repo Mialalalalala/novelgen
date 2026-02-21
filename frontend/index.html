@@ -557,22 +557,22 @@
           <!-- Novel Continuation -->
           <div class="feature-card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); margin: 20px 0;">
             <h3>✍️ AI 续写小说</h3>
-            <p style="font-size: 12px; margin-bottom: 10px; opacity: 0.9;">让 AI 帮你继续写下去</p>
-            <input 
-              type="text" 
+            <p style="font-size: 12px; margin-bottom: 10px; opacity: 0.9;">告诉 AI 你想看什么剧情发展</p>
+            <textarea 
               id="continue-prompt-${novel._id}"
               class="feature-input" 
-              placeholder="（可选）提示续写方向，如：女主开始反击、揭露真相..."
-            />
+              style="min-height: 80px; resize: vertical;"
+              placeholder="输入你想要的剧情，例如：&#10;• 女主发现渣男出轨证据，当场打脸&#10;• 女主在公司会议上逆袭，让所有人刮目相看&#10;• 男二深情告白，女主犹豫..."
+            ></textarea>
             <button 
               class="feature-btn" 
               onclick="continueNovel('${novel._id}', '${novel.title}', '${novel.genre}')"
               id="continue-btn-${novel._id}"
             >
-              📝 续写故事
+              📝 生成剧情
             </button>
             <div id="continuation-result-${novel._id}" class="continuation-container" style="margin-top: 15px; display: none;">
-              <h4 style="margin: 0 0 10px 0; color: white;">📖 续写内容：</h4>
+              <h4 style="margin: 0 0 10px 0; color: white;">📖 新剧情：</h4>
               <div id="continuation-text-${novel._id}" style="background: rgba(255,255,255,0.95); color: #333; padding: 15px; border-radius: 8px; line-height: 1.8; max-height: 400px; overflow-y: auto;"></div>
             </div>
           </div>
@@ -894,6 +894,12 @@
       
       const direction = promptInput.value.trim()
       const novelContent = novelContents[novelId] || ''
+      
+      if (!direction) {
+        alert('请输入你想看的剧情发展！')
+        promptInput.focus()
+        return
+      }
       
       if (!novelContent) {
         alert('小说内容为空，无法续写')

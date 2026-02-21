@@ -24,6 +24,9 @@ module.exports = async function handler(req, res) {
   if (!novelContent) {
     return res.status(400).json({ error: 'Novel content is required' });
   }
+  if (!direction) {
+    return res.status(400).json({ error: 'Please specify what story direction you want' });
+  }
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -55,18 +58,23 @@ module.exports = async function handler(req, res) {
           },
           {
             role: 'user',
-            content: `请续写以下小说：
+            content: `请根据用户的要求续写以下小说：
 
 小说标题：《${novelTitle || '未命名'}》
 小说类型：${genre || '大女主'}
 
-=== 已有内容（请接着写）===
+=== 已有内容 ===
 ${novelContent.substring(-3000)}
 === 已有内容结束 ===
 
-${direction ? `续写方向提示：${direction}` : '请根据剧情自然发展续写。'}
+【用户想看的剧情】：${direction}
 
-请直接续写故事内容：`
+请根据用户的要求，续写故事内容。必须：
+1. 衔接前文
+2. 实现用户想要的剧情发展
+3. 写得精彩、有爽点
+
+直接开始写故事，不要说"好的"之类的开场白：`
           }
         ],
         max_tokens: 1500,
