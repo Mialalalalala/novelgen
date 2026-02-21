@@ -14,7 +14,7 @@ module.exports = async function handler(req, res) {
   if (req.method === 'GET') {
     return res.status(200).json({ 
       status: 'ok', 
-      service: 'Gemini Veo Video Generation API',
+      service: 'Gemini Imagen Image Generation API',
       timestamp: new Date().toISOString()
     });
   }
@@ -36,62 +36,43 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: 'Prompt is required' });
   }
 
-  console.log('Generating video for:', sceneTitle || 'Untitled scene');
+  console.log('Generating image for:', sceneTitle || 'Untitled scene');
   console.log('Prompt:', prompt.substring(0, 100) + '...');
 
   try {
     const ai = new GoogleGenAI({ apiKey });
 
-    // Start video generation (async operation)
-    const operation = await ai.models.generateVideos({
-      model: 'veo-2.0-generate-001',
+    const response = await ai.models.generateImages({
+      model: 'imagen-3.0-generate-002',
       prompt: prompt.substring(0, 500),
       config: {
-        personGeneration: 'dont_allow',
+        numberOfImages: 1,
         aspectRatio: '16:9',
       },
     });
 
-    console.log('Video generation started, polling for completion...');
-
-    // Poll for completion (max 5 minutes)
-    let attempts = 0;
-    const maxAttempts = 30;
-    let currentOperation = operation;
-
-    while (!currentOperation.done && attempts < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, 10000));
-      currentOperation = await ai.operations.get(currentOperation);
-      attempts++;
-      console.log(`Polling attempt ${attempts}/${maxAttempts}...`);
-    }
-
-    if (!currentOperation.done) {
-      throw new Error('Video generation timed out');
-    }
-
-    if (currentOperation.response && currentOperation.response.generatedVideos) {
-      const video = currentOperation.response.generatedVideos[0];
-      if (video && video.video) {
-        console.log('Video generated successfully!');
+    if (response.generatedImages && response.generatedImages.length > 0) {
+      const image = response.generatedImages[0];
+      if (image.image && image.image.imageBytes) {
+        console.log('Image generated successfully!');
         return res.status(200).json({
           success: true,
-          videoUrl: video.video.uri,
-          mimeType: 'video/mp4',
+          imageData: image.image.imageBytes,
+          mimeType: 'image/png',
           sceneTitle
         });
       }
     }
 
     return res.status(500).json({ 
-      error: 'No video generated',
-      details: 'The API response did not contain video data'
+      error: 'No image generated',
+      details: 'The API response did not contain image data'
     });
 
   } catch (error) {
-    console.error('Video generation error:', error);
+    console.error('Image generation error:', error);
     return res.status(500).json({ 
-      error: 'Video generation failed',
+      error: 'Image generation failed',
       details: error.message 
     });
   }

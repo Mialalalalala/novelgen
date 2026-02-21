@@ -92,7 +92,7 @@ app.post('/api/generate-novel', async (req, res) => {
   }
 })
 
-// Image Generation Endpoint using Gemini Imagen
+// Image Generation Endpoint using Gemini Imagen 3
 app.post('/api/generate-image', async (req, res) => {
   try {
     const { prompt, sceneTitle } = req.body
@@ -108,63 +108,31 @@ app.post('/api/generate-image', async (req, res) => {
       })
     }
 
-    console.log('Generating image with Gemini...', { sceneTitle, prompt: prompt.substring(0, 100) })
+    console.log('Generating image with Imagen 3...', { sceneTitle, prompt: prompt.substring(0, 100) })
 
-    const { GoogleGenerativeAI } = require('@google/generative-ai')
-    const genAI = new GoogleGenerativeAI(apiKey)
-    
-    // Use Gemini to generate image
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+    // Use the Google GenAI SDK for Imagen 3
+    const { GoogleGenAI } = require('@google/genai')
+    const ai = new GoogleGenAI({ apiKey })
 
-    const result = await model.generateContent({
-      contents: [{
-        role: 'user',
-        parts: [{
-          text: `Generate a detailed, cinematic image for this scene: ${prompt.substring(0, 500)}`
-        }]
-      }],
-      generationConfig: {
-        responseModalities: ['image', 'text'],
-      }
+    const response = await ai.models.generateImages({
+      model: 'imagen-3.0-generate-002',
+      prompt: prompt.substring(0, 500),
+      config: {
+        numberOfImages: 1,
+        aspectRatio: '16:9',
+      },
     })
 
-    const response = await result.response
-    
-    // Check for image in response
-    if (response.candidates && response.candidates[0]) {
-      const parts = response.candidates[0].content?.parts || []
-      for (const part of parts) {
-        if (part.inlineData) {
-          console.log('Image generated successfully!')
-          return res.status(200).json({
-            success: true,
-            imageData: part.inlineData.data,
-            mimeType: part.inlineData.mimeType || 'image/png',
-            sceneTitle
-          })
-        }
-      }
-    }
-
-    // Fallback: Use Imagen 3 model
-    console.log('Trying Imagen 3 model...')
-    const imagenModel = genAI.getGenerativeModel({ model: 'imagen-3.0-generate-002' })
-    
-    const imagenResult = await imagenModel.generateContent(prompt.substring(0, 500))
-    const imagenResponse = await imagenResult.response
-    
-    if (imagenResponse.candidates && imagenResponse.candidates[0]) {
-      const parts = imagenResponse.candidates[0].content?.parts || []
-      for (const part of parts) {
-        if (part.inlineData) {
-          console.log('Image generated with Imagen 3!')
-          return res.status(200).json({
-            success: true,
-            imageData: part.inlineData.data,
-            mimeType: part.inlineData.mimeType || 'image/png',
-            sceneTitle
-          })
-        }
+    if (response.generatedImages && response.generatedImages.length > 0) {
+      const image = response.generatedImages[0]
+      if (image.image && image.image.imageBytes) {
+        console.log('Image generated successfully!')
+        return res.status(200).json({
+          success: true,
+          imageData: image.image.imageBytes,
+          mimeType: 'image/png',
+          sceneTitle
+        })
       }
     }
 
