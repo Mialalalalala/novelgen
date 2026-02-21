@@ -24,6 +24,10 @@
       "dest": "/api/chat.js"
     },
     {
+      "src": "/api/continue-novel",
+      "dest": "/api/continue-novel.js"
+    },
+    {
       "src": "/(.*)",
       "dest": "/frontend/$1"
     }

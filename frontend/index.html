@@ -553,6 +553,29 @@
               </div>
             </div>
           </div>
+          
+          <!-- Novel Continuation -->
+          <div class="feature-card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); margin: 20px 0;">
+            <h3>✍️ AI 续写小说</h3>
+            <p style="font-size: 12px; margin-bottom: 10px; opacity: 0.9;">让 AI 帮你继续写下去</p>
+            <input 
+              type="text" 
+              id="continue-prompt-${novel._id}"
+              class="feature-input" 
+              placeholder="（可选）提示续写方向，如：女主开始反击、揭露真相..."
+            />
+            <button 
+              class="feature-btn" 
+              onclick="continueNovel('${novel._id}', '${novel.title}', '${novel.genre}')"
+              id="continue-btn-${novel._id}"
+            >
+              📝 续写故事
+            </button>
+            <div id="continuation-result-${novel._id}" class="continuation-container" style="margin-top: 15px; display: none;">
+              <h4 style="margin: 0 0 10px 0; color: white;">📖 续写内容：</h4>
+              <div id="continuation-text-${novel._id}" style="background: rgba(255,255,255,0.95); color: #333; padding: 15px; border-radius: 8px; line-height: 1.8; max-height: 400px; overflow-y: auto;"></div>
+            </div>
+          </div>
 
           ${novel.scenes && novel.scenes.length > 0 ? `
             <div style="margin: 20px 0;">
@@ -862,9 +885,71 @@
       }
     }
     
+    // Continue Novel
+    async function continueNovel(novelId, novelTitle, genre) {
+      const promptInput = document.getElementById(`continue-prompt-${novelId}`)
+      const btn = document.getElementById(`continue-btn-${novelId}`)
+      const resultContainer = document.getElementById(`continuation-result-${novelId}`)
+      const textContainer = document.getElementById(`continuation-text-${novelId}`)
+      
+      const direction = promptInput.value.trim()
+      const novelContent = novelContents[novelId] || ''
+      
+      if (!novelContent) {
+        alert('小说内容为空，无法续写')
+        return
+      }
+      
+      btn.disabled = true
+      btn.textContent = '⏳ 续写中...'
+      resultContainer.style.display = 'block'
+      textContainer.innerHTML = '<p style="color: #666;">AI 正在创作中，请稍候...</p>'
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/continue-novel`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            novelTitle,
+            genre,
+            novelContent,
+            direction
+          }),
+        })
+        
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.error || 'Failed to continue novel')
+        }
+        
+        const data = await response.json()
+        
+        if (data.continuation) {
+          // Format the continuation with proper line breaks
+          const formatted = data.continuation
+            .split('\n')
+            .map(line => line.trim() ? `<p>${line}</p>` : '')
+            .join('')
+          
+          textContainer.innerHTML = formatted || '<p>生成完成</p>'
+        } else {
+          throw new Error('No continuation generated')
+        }
+        
+        promptInput.value = ''
+      } catch (error) {
+        console.error('Continuation error:', error)
+        textContainer.innerHTML = `<p style="color: #c00;">❌ 续写失败: ${error.message}</p>`
+      } finally {
+        btn.disabled = false
+        btn.textContent = '📝 续写故事'
+      }
+    }
+    
     // Make functions globally available
     window.generateSceneImage = generateSceneImage
     window.sendChat = sendChat
+    window.continueNovel = continueNovel
 
     // Close modal
     function closeModal() {
