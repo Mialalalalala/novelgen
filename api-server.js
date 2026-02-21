@@ -167,14 +167,99 @@ app.post('/api/generate-image', async (req, res) => {
   }
 })
 
+// Chat with Protagonist Endpoint
+app.post('/api/chat', async (req, res) => {
+  try {
+    const { message, novelTitle, genre, novelContent, chatHistory } = req.body
+
+    if (!message) {
+      return res.status(400).json({ error: 'Message is required' })
+    }
+
+    const apiKey = process.env.OPENAI_API_KEY
+    if (!apiKey) {
+      return res.status(500).json({ 
+        error: 'OpenAI API key not configured.' 
+      })
+    }
+
+    console.log('Chat with protagonist...', { novelTitle, message: message.substring(0, 50) })
+
+    // Build conversation history
+    const messages = [
+      {
+        role: 'system',
+        content: `你现在扮演小说《${novelTitle || '未命名'}》中的女主角。
+
+小说类型：${genre || '大女主'}
+小说内容摘要：${novelContent ? novelContent.substring(0, 500) : '暂无'}
+
+角色设定：
+- 你是一个聪明、独立、有主见的大女主
+- 性格坚强但不冷漠，有自己的原则和底线
+- 说话风格现代、接地气，偶尔会怼人
+- 面对困难不退缩，面对渣男会反击
+- 你知道自己的价值，不会委屈自己
+
+请完全代入角色，用第一人称回复。不要说"作为AI"之类的话。
+回复要简短有趣，像真人聊天一样。可以用表情符号。`
+      }
+    ]
+
+    // Add chat history
+    if (chatHistory && chatHistory.length > 0) {
+      chatHistory.slice(-10).forEach(msg => {
+        messages.push({
+          role: msg.role === 'user' ? 'user' : 'assistant',
+          content: msg.content
+        })
+      })
+    }
+
+    // Add current message
+    messages.push({ role: 'user', content: message })
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4',
+        messages: messages,
+        max_tokens: 300,
+        temperature: 0.9,
+      }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.error?.message || 'Chat API error')
+    }
+
+    const data = await response.json()
+    const reply = data.choices[0]?.message?.content
+
+    console.log('Chat response:', reply?.substring(0, 50))
+
+    res.status(200).json({ 
+      reply: reply || '（沉默）',
+    })
+
+  } catch (error) {
+    console.error('Error in chat:', error)
+    res.status(500).json({ 
+      error: error.message || 'Failed to chat' 
+    })
+  }
+})
+
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
-    message: 'AI Novel & Video Generation API is running',
-    providers: {
-      novel: 'OpenAI',
-      video: 'Gemini Veo 2'
-    }
+    message: 'AI Novel API is running',
+    features: ['novel-generation', 'image-generation', 'chat-with-protagonist']
   })
 })
 
