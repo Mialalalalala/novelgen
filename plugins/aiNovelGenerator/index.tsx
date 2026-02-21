@@ -73,6 +73,12 @@ export default (props: any): DocumentActionDescription | undefined => {
               <option value="rebirth">重生复仇 (打脸爽文)</option>
               <option value="entertainment">娱乐圈 (逆袭成名)</option>
               <option value="mystery">悬疑推理 (女侦探)</option>
+              <option value="crematorium">追妻火葬场 (渣男追妻)</option>
+              <option value="divorce">离婚后爱上我 (前夫后悔)</option>
+              <option value="fake-marriage">先婚后爱 (契约婚姻)</option>
+              <option value="substitute">替身文 (真假千金)</option>
+              <option value="campus">校园甜宠 (学霸女主)</option>
+              <option value="time-travel">穿越古代 (带空间金手指)</option>
             </select>
           </div>
           <div>
@@ -109,6 +115,12 @@ export default (props: any): DocumentActionDescription | undefined => {
         'rebirth': '重生复仇爽文，女主带着前世记忆重生，一一打脸害过她的人，改写命运',
         'entertainment': '娱乐圈逆袭文，女主从小透明成长为巨星，打脸黑粉和绿茶，走向人生巅峰',
         'mystery': '悬疑推理文，女主是聪明冷静的侦探/律师，靠智慧破案，打脸质疑她的人',
+        'crematorium': '追妻火葬场，渣男前期对女主各种冷漠/出轨/伤害，女主心死离开后，渣男才发现自己爱她，跪舔追妻但女主已经不在乎了，让他后悔到哭',
+        'divorce': '离婚后爱上我，女主提出离婚后华丽蜕变，前夫/前男友肠子悔青，疯狂追求但女主已经不care了',
+        'fake-marriage': '先婚后爱/契约婚姻，假结婚变真爱，但女主始终保持独立人格，男主先动心先上头',
+        'substitute': '替身文/真假千金，女主是被换/被替的那个，后来真相大白，打脸抢她位置的白莲花，所有人都后悔',
+        'campus': '校园甜宠，女主是学霸/校花，聪明漂亮有主见，不是恋爱脑，男主先沦陷',
+        'time-travel': '穿越古代带金手指，女主穿越后靠现代知识和空间/系统逆袭，在古代混得风生水起',
       }
       
       const genreDesc = genreDescriptions[genre] || '大女主逆袭爽文'
