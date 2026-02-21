@@ -92,7 +92,7 @@ app.post('/api/generate-novel', async (req, res) => {
   }
 })
 
-// Image Generation Endpoint using Gemini Imagen 3
+// Image Generation Endpoint using OpenAI DALL-E
 app.post('/api/generate-image', async (req, res) => {
   try {
     const { prompt, sceneTitle } = req.body
@@ -101,39 +101,45 @@ app.post('/api/generate-image', async (req, res) => {
       return res.status(400).json({ error: 'Prompt is required' })
     }
 
-    const apiKey = process.env.GEMINI_API_KEY
+    const apiKey = process.env.OPENAI_API_KEY
     if (!apiKey) {
       return res.status(500).json({ 
-        error: 'Gemini API key not configured. Please set GEMINI_API_KEY in .env file.' 
+        error: 'OpenAI API key not configured. Please set OPENAI_API_KEY in .env file.' 
       })
     }
 
-    console.log('Generating image with Imagen 3...', { sceneTitle, prompt: prompt.substring(0, 100) })
+    console.log('Generating image with DALL-E 3...', { sceneTitle, prompt: prompt.substring(0, 100) })
 
-    // Use the Google GenAI SDK for Imagen 3
-    const { GoogleGenAI } = require('@google/genai')
-    const ai = new GoogleGenAI({ apiKey })
-
-    const response = await ai.models.generateImages({
-      model: 'imagen-3.0-generate-002',
-      prompt: prompt.substring(0, 500),
-      config: {
-        numberOfImages: 1,
-        aspectRatio: '16:9',
+    const response = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
       },
+      body: JSON.stringify({
+        model: 'dall-e-3',
+        prompt: prompt.substring(0, 1000),
+        n: 1,
+        size: '1792x1024',
+        quality: 'standard',
+      }),
     })
 
-    if (response.generatedImages && response.generatedImages.length > 0) {
-      const image = response.generatedImages[0]
-      if (image.image && image.image.imageBytes) {
-        console.log('Image generated successfully!')
-        return res.status(200).json({
-          success: true,
-          imageData: image.image.imageBytes,
-          mimeType: 'image/png',
-          sceneTitle
-        })
-      }
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.error?.message || `DALL-E API error: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    
+    if (data.data && data.data[0] && data.data[0].url) {
+      console.log('Image generated successfully!')
+      return res.status(200).json({
+        success: true,
+        imageUrl: data.data[0].url,
+        mimeType: 'image/png',
+        sceneTitle
+      })
     }
 
     throw new Error('No image generated from API response')

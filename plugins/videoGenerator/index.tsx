@@ -161,11 +161,17 @@ Visual style: ${style}.
       const currentScenes = currentDoc?.scenes || []
 
       // Add new scene with image
+      const imageUrl = data.imageUrl || (data.imageData ? `data:${data.mimeType};base64,${data.imageData}` : null)
+      
+      if (!imageUrl) {
+        throw new Error('No image URL in response')
+      }
+
       const newScene = {
         _key: Date.now().toString(),
         title: sceneTitle || 'Generated Scene',
-        description: scenePrompt,
-        imageUrl: data.imageUrl || `data:${data.mimeType};base64,${data.imageData}`,
+        description: scenePrompt.substring(0, 200),
+        imageUrl: imageUrl,
         status: 'completed',
       }
 
