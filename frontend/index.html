@@ -1119,6 +1119,18 @@
           renderContent(novel.content, document.getElementById('novel-content'))
           // Store content as plain text for chat context
           novelContents[novel._id] = extractTextFromBlocks(novel.content)
+          
+          // Extract character names and update role buttons
+          const characters = extractCharacterNames(novel._id, novelContents[novel._id])
+          updateRoleButtons(novel._id, characters)
+          
+          // Update initial greeting with character name
+          const speechText = document.getElementById(`speech-text-${novel._id}`)
+          if (speechText && characters?.heroine) {
+            const greeting = getCharacterGreeting(novel._id, 'heroine')
+            speechText.textContent = greeting
+            currentSpeechTexts[novel._id] = greeting
+          }
         } else {
           document.getElementById('novel-content').innerHTML = '<p style="color: #999;">No content available</p>'
           novelContents[novel._id] = ''
@@ -1228,12 +1240,147 @@
       supporting: (id) => `https://api.dicebear.com/7.x/lorelei/svg?seed=${id}-support&backgroundColor=d1d4f9`
     }
     
-    // Role display info
+    // Role display info (default)
     const roleInfo = {
       heroine: { name: '女主', greeting: '嗨～点击下面的麦克风和我聊天吧～ 😊', voice: 'nova' },
       hero: { name: '男主', greeting: '你好，有什么想和我说的吗？', voice: 'onyx' },
       villain: { name: '反派', greeting: '哼，你来找我做什么？ 😏', voice: 'echo' },
       supporting: { name: '配角', greeting: '啊，你想和我聊聊吗？', voice: 'alloy' }
+    }
+    
+    // Store extracted character names per novel
+    const novelCharacters = {}
+    
+    // Extract character names from novel content
+    function extractCharacterNames(novelId, content) {
+      if (!content) return null
+      
+      // Common Chinese name patterns (2-3 characters)
+      const namePattern = /([林苏叶陆顾沈周王李张刘陈杨黄赵吴郑孙胡朱高何郭罗宋谢唐韩曹许邓萧][一-龥]{1,2})/g
+      const names = []
+      const nameCount = {}
+      
+      // Count name occurrences
+      let match
+      while ((match = namePattern.exec(content)) !== null) {
+        const name = match[1]
+        nameCount[name] = (nameCount[name] || 0) + 1
+      }
+      
+      // Sort by frequency
+      const sortedNames = Object.entries(nameCount)
+        .filter(([name, count]) => count >= 2 && name.length >= 2)
+        .sort((a, b) => b[1] - a[1])
+        .map(([name]) => name)
+      
+      // Assign roles based on context and frequency
+      const characters = {
+        heroine: null,
+        hero: null,
+        villain: null,
+        supporting: null
+      }
+      
+      // Look for specific role indicators
+      const heroinePatterns = [/女主[角是叫]?[：:】]?\s*([林苏叶陆顾沈周王李张刘陈杨黄赵吴郑孙胡朱高何郭罗宋谢唐韩曹许邓萧][一-龥]{1,2})/,
+                               /([林苏叶陆顾沈周王李张刘陈杨黄赵吴郑孙胡朱高何郭罗宋谢唐韩曹许邓萧][一-龥]{1,2}).{0,10}(女主|独立|聪明|坚强)/]
+      const heroPatterns = [/男主[角是叫]?[：:】]?\s*([林苏叶陆顾沈周王李张刘陈杨黄赵吴郑孙胡朱高何郭罗宋谢唐韩曹许邓萧][一-龥]{1,2})/,
+                            /([林苏叶陆顾沈周王李张刘陈杨黄赵吴郑孙胡朱高何郭罗宋谢唐韩曹许邓萧][一-龥]{1,2}).{0,10}(总裁|深情|英俊)/]
+      const villainPatterns = [/([林苏叶陆顾沈周王李张刘陈杨黄赵吴郑孙胡朱高何郭罗宋谢唐韩曹许邓萧][一-龥]{1,2}).{0,10}(反派|阴险|嫉妒|得意|白莲花|心机)/]
+      
+      // Try to find heroine
+      for (const pattern of heroinePatterns) {
+        const match = content.match(pattern)
+        if (match && match[1]) {
+          characters.heroine = match[1]
+          break
+        }
+      }
+      
+      // If not found, use first frequent female-sounding name or first name
+      if (!characters.heroine && sortedNames.length > 0) {
+        characters.heroine = sortedNames[0]
+      }
+      
+      // Try to find hero
+      for (const pattern of heroPatterns) {
+        const match = content.match(pattern)
+        if (match && match[1] && match[1] !== characters.heroine) {
+          characters.hero = match[1]
+          break
+        }
+      }
+      
+      // If not found, use second most frequent name
+      if (!characters.hero) {
+        for (const name of sortedNames) {
+          if (name !== characters.heroine) {
+            characters.hero = name
+            break
+          }
+        }
+      }
+      
+      // Try to find villain
+      for (const pattern of villainPatterns) {
+        const match = content.match(pattern)
+        if (match && match[1] && match[1] !== characters.heroine && match[1] !== characters.hero) {
+          characters.villain = match[1]
+          break
+        }
+      }
+      
+      // If not found, use third name
+      if (!characters.villain) {
+        for (const name of sortedNames) {
+          if (name !== characters.heroine && name !== characters.hero) {
+            characters.villain = name
+            break
+          }
+        }
+      }
+      
+      // Supporting character - fourth name
+      for (const name of sortedNames) {
+        if (name !== characters.heroine && name !== characters.hero && name !== characters.villain) {
+          characters.supporting = name
+          break
+        }
+      }
+      
+      novelCharacters[novelId] = characters
+      return characters
+    }
+    
+    // Update role buttons with actual names
+    function updateRoleButtons(novelId, characters) {
+      if (!characters) return
+      
+      const roleTypes = ['heroine', 'hero', 'villain', 'supporting']
+      const defaultNames = { heroine: '女主', hero: '男主', villain: '反派', supporting: '配角' }
+      
+      roleTypes.forEach(role => {
+        const btn = document.querySelector(`[data-novel="${novelId}"][data-role="${role}"] .role-name`)
+        if (btn) {
+          const name = characters[role] || defaultNames[role]
+          btn.textContent = name
+        }
+      })
+    }
+    
+    // Get character greeting
+    function getCharacterGreeting(novelId, role) {
+      const characters = novelCharacters[novelId]
+      const name = characters?.[role]
+      
+      const greetings = {
+        heroine: name ? `嗨～我是${name}，点击麦克风和我聊天吧～ 😊` : '嗨～点击下面的麦克风和我聊天吧～ 😊',
+        hero: name ? `我是${name}，有什么事？` : '你好，有什么想和我说的吗？',
+        villain: name ? `哼，我是${name}，你来找我做什么？ 😏` : '哼，你来找我做什么？ 😏',
+        supporting: name ? `啊，我是${name}，你想聊聊吗？` : '啊，你想和我聊聊吗？'
+      }
+      
+      return greetings[role] || greetings.heroine
     }
     
     // Select chat role
@@ -1257,10 +1404,11 @@
         charImg.src = defaultAvatars[role](novelId)
       }
       
-      // Update greeting
+      // Update greeting with actual character name
       const speechText = document.getElementById(`speech-text-${novelId}`)
-      speechText.textContent = roleInfo[role].greeting
-      currentSpeechTexts[novelId] = roleInfo[role].greeting
+      const greeting = getCharacterGreeting(novelId, role)
+      speechText.textContent = greeting
+      currentSpeechTexts[novelId] = greeting
       
       // Clear chat history for new role
       if (chatHistories[novelId]) {
