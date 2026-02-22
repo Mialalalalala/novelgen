@@ -307,38 +307,195 @@
     .character-container {
       position: relative;
       width: 200px;
-      height: 200px;
+      height: 280px;
       margin-bottom: 15px;
     }
+    
+    /* Character wrapper for animations */
+    .character-wrapper {
+      position: relative;
+      width: 200px;
+      height: 250px;
+      animation: idleBreath 4s ease-in-out infinite;
+    }
+    .character-wrapper.thinking {
+      animation: thinkingMotion 2s ease-in-out infinite;
+    }
+    .character-wrapper.speaking {
+      animation: speakingMotion 0.3s ease-in-out infinite;
+    }
+    
+    /* Idle breathing animation */
+    @keyframes idleBreath {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-3px) scale(1.01); }
+    }
+    
+    /* Thinking animation - head tilt */
+    @keyframes thinkingMotion {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      25% { transform: translateY(-2px) rotate(-2deg); }
+      75% { transform: translateY(-2px) rotate(2deg); }
+    }
+    
+    /* Speaking animation - more dynamic */
+    @keyframes speakingMotion {
+      0%, 100% { transform: translateY(0) scale(1); }
+      25% { transform: translateY(-2px) scale(1.02) rotate(-1deg); }
+      50% { transform: translateY(-4px) scale(1.01); }
+      75% { transform: translateY(-2px) scale(1.02) rotate(1deg); }
+    }
+    
     .character-image {
-      width: 100%;
-      height: 100%;
+      width: 200px;
+      height: 200px;
       border-radius: 50%;
       object-fit: cover;
       border: 4px solid white;
       box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-      transition: transform 0.3s;
     }
-    .character-image.speaking {
-      animation: characterBounce 0.5s ease-in-out infinite;
+    
+    /* Mouth animation overlay */
+    .character-mouth {
+      position: absolute;
+      bottom: 55px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 30px;
+      height: 8px;
+      background: rgba(0,0,0,0.1);
+      border-radius: 50%;
+      opacity: 0;
+      transition: all 0.1s;
     }
-    @keyframes characterBounce {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
+    .character-wrapper.speaking .character-mouth {
+      opacity: 1;
+      animation: mouthMove 0.2s ease-in-out infinite;
     }
+    @keyframes mouthMove {
+      0%, 100% { 
+        height: 8px; 
+        width: 30px;
+        border-radius: 50%;
+      }
+      50% { 
+        height: 16px; 
+        width: 24px;
+        border-radius: 50%;
+      }
+    }
+    
+    /* Blinking eyes overlay */
+    .character-eyes {
+      position: absolute;
+      top: 75px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 40px;
+    }
+    .character-eye {
+      width: 8px;
+      height: 8px;
+      background: transparent;
+      border-radius: 50%;
+      animation: blink 4s infinite;
+    }
+    .character-eye::after {
+      content: '';
+      position: absolute;
+      width: 8px;
+      height: 3px;
+      background: rgba(0,0,0,0.15);
+      border-radius: 50%;
+      opacity: 0;
+    }
+    @keyframes blink {
+      0%, 95%, 100% { transform: scaleY(1); }
+      97% { transform: scaleY(0.1); }
+    }
+    
+    /* Sound wave animation when speaking */
+    .sound-waves {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 4px;
+      align-items: flex-end;
+      height: 20px;
+      opacity: 0;
+    }
+    .character-wrapper.speaking .sound-waves {
+      opacity: 1;
+    }
+    .sound-wave {
+      width: 4px;
+      background: #4CAF50;
+      border-radius: 2px;
+      animation: soundWave 0.5s ease-in-out infinite;
+    }
+    .sound-wave:nth-child(1) { animation-delay: 0s; }
+    .sound-wave:nth-child(2) { animation-delay: 0.1s; }
+    .sound-wave:nth-child(3) { animation-delay: 0.2s; }
+    .sound-wave:nth-child(4) { animation-delay: 0.1s; }
+    .sound-wave:nth-child(5) { animation-delay: 0s; }
+    @keyframes soundWave {
+      0%, 100% { height: 8px; }
+      50% { height: 20px; }
+    }
+    
+    /* Speaking indicator */
     .character-speaking-indicator {
       position: absolute;
-      bottom: 10px;
+      top: 10px;
       right: 10px;
-      width: 24px;
-      height: 24px;
+      width: 20px;
+      height: 20px;
       background: #4CAF50;
       border-radius: 50%;
       display: none;
       animation: pulse 1s infinite;
+      box-shadow: 0 0 10px #4CAF50;
     }
     .character-speaking-indicator.active {
       display: block;
+    }
+    
+    /* Emotion particles */
+    .emotion-particles {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .particle {
+      position: absolute;
+      font-size: 16px;
+      opacity: 0;
+    }
+    .character-wrapper.speaking .particle {
+      animation: floatUp 2s ease-out infinite;
+    }
+    .particle:nth-child(1) { left: 10%; animation-delay: 0s; }
+    .particle:nth-child(2) { left: 80%; animation-delay: 0.5s; }
+    .particle:nth-child(3) { left: 20%; animation-delay: 1s; }
+    @keyframes floatUp {
+      0% { 
+        transform: translateY(200px) scale(0.5); 
+        opacity: 0; 
+      }
+      50% { 
+        opacity: 1; 
+      }
+      100% { 
+        transform: translateY(-20px) scale(1); 
+        opacity: 0; 
+      }
     }
     .character-speech {
       background: white;
@@ -761,12 +918,35 @@
             <!-- Character Display -->
             <div class="character-stage">
               <div class="character-container" id="character-container-${novel._id}">
-                <img 
-                  src="https://api.dicebear.com/7.x/lorelei/svg?seed=${novel._id}&backgroundColor=ffdfbf" 
-                  alt="女主" 
-                  class="character-image"
-                  id="character-image-${novel._id}"
-                />
+                <div class="character-wrapper" id="character-wrapper-${novel._id}">
+                  <img 
+                    src="https://api.dicebear.com/7.x/lorelei/svg?seed=${novel._id}&backgroundColor=ffdfbf" 
+                    alt="女主" 
+                    class="character-image"
+                    id="character-image-${novel._id}"
+                  />
+                  <!-- Eye blink overlay -->
+                  <div class="character-eyes">
+                    <div class="character-eye"></div>
+                    <div class="character-eye"></div>
+                  </div>
+                  <!-- Mouth animation overlay -->
+                  <div class="character-mouth"></div>
+                  <!-- Emotion particles -->
+                  <div class="emotion-particles">
+                    <span class="particle">✨</span>
+                    <span class="particle">💕</span>
+                    <span class="particle">🌸</span>
+                  </div>
+                  <!-- Sound waves -->
+                  <div class="sound-waves">
+                    <div class="sound-wave"></div>
+                    <div class="sound-wave"></div>
+                    <div class="sound-wave"></div>
+                    <div class="sound-wave"></div>
+                    <div class="sound-wave"></div>
+                  </div>
+                </div>
                 <div class="character-speaking-indicator" id="speaking-indicator-${novel._id}"></div>
               </div>
               
@@ -1499,7 +1679,7 @@
       const voiceBtn = document.getElementById(`char-voice-btn-${novelId}`)
       const speechText = document.getElementById(`speech-text-${novelId}`)
       const speechPlay = document.getElementById(`speech-play-${novelId}`)
-      const charImg = document.getElementById(`character-image-${novelId}`)
+      const charWrapper = document.getElementById(`character-wrapper-${novelId}`)
       const speakingIndicator = document.getElementById(`speaking-indicator-${novelId}`)
       const status = document.getElementById(`char-status-${novelId}`)
       
@@ -1517,7 +1697,8 @@
       
       // Show thinking state
       speechText.textContent = '让我想想...'
-      charImg.classList.add('speaking')
+      charWrapper.classList.remove('speaking')
+      charWrapper.classList.add('thinking')
       speakingIndicator.classList.add('active')
       status.textContent = '🤔 思考中...'
       
@@ -1544,7 +1725,9 @@
         currentSpeechTexts[novelId] = reply
         chatHistories[novelId].push({ role: 'assistant', content: reply })
         
-        // Generate and play voice
+        // Switch to speaking animation
+        charWrapper.classList.remove('thinking')
+        charWrapper.classList.add('speaking')
         status.textContent = '🔊 生成语音中...'
         
         try {
@@ -1567,7 +1750,7 @@
               audio.onended = () => {
                 speechPlay.classList.remove('playing')
                 speechPlay.textContent = '🔊'
-                charImg.classList.remove('speaking')
+                charWrapper.classList.remove('speaking')
                 speakingIndicator.classList.remove('active')
                 currentAudio = null
               }
@@ -1577,7 +1760,7 @@
           }
         } catch (ttsError) {
           console.error('TTS error:', ttsError)
-          charImg.classList.remove('speaking')
+          charWrapper.classList.remove('speaking')
           speakingIndicator.classList.remove('active')
         }
         
@@ -1586,7 +1769,7 @@
       } catch (error) {
         console.error('Character chat error:', error)
         speechText.textContent = '抱歉，我现在有点问题... 💔'
-        charImg.classList.remove('speaking')
+        charWrapper.classList.remove('thinking', 'speaking')
         speakingIndicator.classList.remove('active')
         status.textContent = ''
       } finally {
@@ -1599,7 +1782,7 @@
     async function playCurrentSpeech(novelId) {
       const text = currentSpeechTexts[novelId] || '嗨～点击下面的麦克风和我聊天吧～'
       const speechPlay = document.getElementById(`speech-play-${novelId}`)
-      const charImg = document.getElementById(`character-image-${novelId}`)
+      const charWrapper = document.getElementById(`character-wrapper-${novelId}`)
       const speakingIndicator = document.getElementById(`speaking-indicator-${novelId}`)
       
       if (currentAudio) {
@@ -1607,13 +1790,13 @@
         currentAudio = null
         speechPlay.classList.remove('playing')
         speechPlay.textContent = '🔊'
-        charImg.classList.remove('speaking')
+        charWrapper.classList.remove('speaking')
         speakingIndicator.classList.remove('active')
         return
       }
       
       speechPlay.textContent = '⏳'
-      charImg.classList.add('speaking')
+      charWrapper.classList.add('speaking')
       speakingIndicator.classList.add('active')
       
       try {
@@ -1635,7 +1818,7 @@
             audio.onended = () => {
               speechPlay.classList.remove('playing')
               speechPlay.textContent = '🔊'
-              charImg.classList.remove('speaking')
+              charWrapper.classList.remove('speaking')
               speakingIndicator.classList.remove('active')
               currentAudio = null
             }
@@ -1646,7 +1829,7 @@
       } catch (error) {
         console.error('Play speech error:', error)
         speechPlay.textContent = '🔊'
-        charImg.classList.remove('speaking')
+        charWrapper.classList.remove('speaking')
         speakingIndicator.classList.remove('active')
       }
     }
