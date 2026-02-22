@@ -221,6 +221,27 @@
       cursor: not-allowed;
     }
     
+    /* Image Type Buttons */
+    .img-type-btn {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      border: 2px solid rgba(255,255,255,0.3);
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .img-type-btn:hover {
+      background: rgba(255,255,255,0.3);
+    }
+    .img-type-btn.active {
+      background: white;
+      color: #667eea;
+      border-color: white;
+      font-weight: bold;
+    }
+    
     /* Chat Interface */
     .chat-container {
       background: #f8f9fa;
@@ -506,13 +527,26 @@
           <div class="interactive-section">
             <!-- Image Generation -->
             <div class="feature-card">
-              <h3>🎨 生成场景图</h3>
-              <p style="font-size: 12px; margin-bottom: 10px; opacity: 0.9;">根据小说内容生成专属插图</p>
+              <h3>🎨 AI 绘图</h3>
+              <p style="font-size: 12px; margin-bottom: 10px; opacity: 0.9;">根据小说内容生成专属图片</p>
+              
+              <!-- Image Type Selection -->
+              <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+                <button class="img-type-btn active" data-novel="${novel._id}" data-type="heroine" onclick="selectImageType('${novel._id}', 'heroine', this)">👩 女主</button>
+                <button class="img-type-btn" data-novel="${novel._id}" data-type="hero" onclick="selectImageType('${novel._id}', 'hero', this)">👨 男主</button>
+                <button class="img-type-btn" data-novel="${novel._id}" data-type="scene" onclick="selectImageType('${novel._id}', 'scene', this)">🎬 名场面</button>
+                <button class="img-type-btn" data-novel="${novel._id}" data-type="couple" onclick="selectImageType('${novel._id}', 'couple', this)">💑 CP同框</button>
+                <button class="img-type-btn" data-novel="${novel._id}" data-type="villain" onclick="selectImageType('${novel._id}', 'villain', this)">😈 反派</button>
+                <button class="img-type-btn" data-novel="${novel._id}" data-type="custom" onclick="selectImageType('${novel._id}', 'custom', this)">✏️ 自定义</button>
+              </div>
+              
+              <input type="hidden" id="img-type-${novel._id}" value="heroine" />
+              
               <input 
                 type="text" 
                 id="scene-prompt-${novel._id}"
                 class="feature-input" 
-                placeholder="输入想看的场景，如：女主逆袭打脸、深情告白..."
+                placeholder="补充描述（可选），如：穿红色晚礼服、霸气侧漏..."
               />
               <button 
                 class="feature-btn" 
@@ -724,15 +758,46 @@
     // Store novel content for chat context
     const novelContents = {}
     
-    // Generate Scene Image
+    // Image type selection
+    function selectImageType(novelId, type, btn) {
+      // Update hidden input
+      document.getElementById(`img-type-${novelId}`).value = type
+      
+      // Update button styles
+      document.querySelectorAll(`[data-novel="${novelId}"].img-type-btn`).forEach(b => {
+        b.classList.remove('active')
+      })
+      btn.classList.add('active')
+      
+      // Update placeholder based on type
+      const promptInput = document.getElementById(`scene-prompt-${novelId}`)
+      const placeholders = {
+        'heroine': '补充描述（可选），如：穿红裙、霸气侧漏、冷艳...',
+        'hero': '补充描述（可选），如：深情凝视、西装革履、腹黑...',
+        'scene': '描述场景，如：女主当众打脸白莲花、深夜告白...',
+        'couple': '补充描述（可选），如：雨中相拥、婚礼现场...',
+        'villain': '补充描述（可选），如：阴险狡诈、假装无辜...',
+        'custom': '输入你想要的任何画面描述...'
+      }
+      promptInput.placeholder = placeholders[type] || '输入描述...'
+    }
+    
+    // Make selectImageType globally available
+    window.selectImageType = selectImageType
+    
+    // Generate Image
     async function generateSceneImage(novelId, novelTitle, genre) {
       const promptInput = document.getElementById(`scene-prompt-${novelId}`)
+      const imgTypeInput = document.getElementById(`img-type-${novelId}`)
       const btn = document.getElementById(`gen-img-btn-${novelId}`)
       const container = document.getElementById(`generated-image-${novelId}`)
       
       const userPrompt = promptInput.value.trim()
-      if (!userPrompt) {
-        alert('请输入场景描述')
+      const imageType = imgTypeInput ? imgTypeInput.value : 'heroine'
+      
+      // Custom type requires user input
+      if (imageType === 'custom' && !userPrompt) {
+        alert('自定义类型请输入描述')
         return
       }
       
@@ -744,23 +809,35 @@
         // Get novel content for context
         const novelContent = novelContents[novelId] || ''
         
-        // Build a rich prompt with novel context
-        let fullPrompt = `小说《${novelTitle}》的场景插图。\n\n`
-        
-        if (novelContent) {
-          // Extract relevant context from novel (first 500 chars for background)
-          fullPrompt += `小说背景：${novelContent.substring(0, 500)}\n\n`
+        // Build prompt based on image type
+        const typePrompts = {
+          'heroine': `小说《${novelTitle}》的女主角人物立绘。\n女主特点：聪明独立、美丽自信、气场强大的大女主。`,
+          'hero': `小说《${novelTitle}》的男主角人物立绘。\n男主特点：帅气多金、深情专一、被女主吸引的优质男性。`,
+          'scene': `小说《${novelTitle}》的精彩名场面。`,
+          'couple': `小说《${novelTitle}》的男女主同框画面。\nCP感：甜蜜、深情、势均力敌的爱情。`,
+          'villain': `小说《${novelTitle}》的反派角色。\n特点：表面善良实则阴险、绿茶/白莲花、最后被打脸的角色。`,
+          'custom': `小说《${novelTitle}》相关图片。`
         }
         
-        fullPrompt += `场景描述：${userPrompt}\n\n`
-        fullPrompt += `风格要求：${genre || '大女主'}风格，高质量插画，电影感光影，精美细节，中国风/现代都市风格（根据小说类型），人物美型，画面唯美。`
+        let fullPrompt = typePrompts[imageType] || typePrompts['custom']
+        fullPrompt += '\n\n'
+        
+        if (novelContent) {
+          fullPrompt += `小说背景：${novelContent.substring(0, 400)}\n\n`
+        }
+        
+        if (userPrompt) {
+          fullPrompt += `额外要求：${userPrompt}\n\n`
+        }
+        
+        fullPrompt += `风格要求：${genre || '大女主'}风格，高质量插画，精美人物，电影感光影，${imageType === 'scene' ? '场景宏大，氛围感强' : '人物美型，五官精致'}，中国风/现代都市风格。`
         
         const response = await fetch(`${API_BASE_URL}/api/generate-image`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             prompt: fullPrompt,
-            sceneTitle: userPrompt.substring(0, 30),
+            sceneTitle: userPrompt.substring(0, 30) || imageType,
             novelTitle,
             genre
           }),
