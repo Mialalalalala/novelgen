@@ -1258,12 +1258,16 @@
       const surnameChars = '林苏叶陆顾沈周王李张刘陈杨黄赵吴郑孙胡朱高何郭罗宋谢唐韩曹许邓萧程江冯陈褚卫蒋董魏薛雷贺倪汤殷罗毕郝安常'
       
       // 1) Count full names (2-3 chars, surname + given name)
+      // 排除 叶总、林小姐 这类称呼，只统计真正的名字
+      const titleSuffixes = ['总', '先生', '小姐', '女士', '助理', '经理', '董事', '律师', '医生', '老师']
       const namePattern = new RegExp(`([${surnameChars}][一-龥]{1,2})`, 'g')
       const nameCount = {}
       let match
       while ((match = namePattern.exec(content)) !== null) {
         const name = match[1]
-        if (name.length >= 2 && name.length <= 3) {
+        // 排除称呼（叶总、林小姐等）
+        const isTitle = titleSuffixes.some(suffix => name.endsWith(suffix))
+        if (name.length >= 2 && name.length <= 3 && !isTitle) {
           nameCount[name] = (nameCount[name] || 0) + 1
         }
       }
@@ -1300,25 +1304,24 @@
       }
       
       const heroinePatterns = [
-        new RegExp(`女主[角是叫]?[：:】]?\\s*([${surnameChars}][一-龥]{1,2})`),
-        new RegExp(`([${surnameChars}][一-龥]{1,2}).{0,15}(女主|独立|聪明|坚强|离婚|协议书|签字)`),
-        new RegExp(`([${surnameChars}][一-龥]{1,2})站在|([${surnameChars}][一-龥]{1,2})推开门`)
+        new RegExp(`女主[角是叫]?[：:】]?\\s*([${surnameChars}][一-龥]{2})`),  // 女主：林笑笑
+        new RegExp(`([${surnameChars}][一-龥]{2}).{0,15}(女主|独立|聪明|坚强|离婚|协议书|签字)`),  // 3字名+关键词
+        new RegExp(`([${surnameChars}][一-龥]{2})站在|([${surnameChars}][一-龥]{2})推开门`)  // 3字名+动作
       ]
       const heroPatterns = [
         new RegExp(`男主[角是叫]?[：:】]?\\s*([${surnameChars}][一-龥]{1,2})`),
-        new RegExp(`([${surnameChars}][一-龥]{1,2}).{0,15}(总裁|深情|英俊|丈夫|未婚夫)`),
-        new RegExp(`([${surnameChars}]总[，。].{0,5}[${surnameChars}][一-龥]{1,2})`),  // 叶总。叶景深
-        new RegExp(`([${surnameChars}]总|景深|景琛).{0,8}([${surnameChars}][一-龥]{1,2})`)
+        new RegExp(`([${surnameChars}][一-龥]{2}).{0,15}(总裁|深情|英俊|丈夫|未婚夫)`),  // 3字名+关键词
+        new RegExp(`[${surnameChars}]总.{0,5}([${surnameChars}][一-龥]{2})`)  // X总后面的3字全名
       ]
       const villainPatterns = [
-        new RegExp(`([${surnameChars}][一-龥]{1,2}).{0,10}(反派|阴险|嫉妒|得意|白莲花|心机|娇嫡|撞着|闺蜜|破坏)`),
-        new RegExp(`那个女人|另一个女人|她.{0,3}([${surnameChars}][一-龥]{1,2})`)
+        new RegExp(`([${surnameChars}][一-龥]{2}).{0,10}(反派|阴险|嫉妒|得意|白莲花|心机|闺蜜|破坏)`),  // 3字名
+        new RegExp(`那个女人.{0,8}([${surnameChars}][一-龥]{2})|另一个女人.{0,8}([${surnameChars}][一-龥]{2})`)
       ]
       const supportingPatterns = [
-        new RegExp(`助理[：:】]?\\s*[「"]?([${surnameChars}][一-龥]{1,2})`),
-        new RegExp(`(律师|朋友|秘书|投资人).{0,8}([${surnameChars}][一-龥]{1,2})`),
-        new RegExp(`([${surnameChars}][一-龥]{1,2})冲进来|([${surnameChars}][一-龥]{1,2})说道|([${surnameChars}][一-龥]{1,2})找上门`),
-        new RegExp(`(?:身边|身旁|对面).{0,5}([${surnameChars}][一-龥]{1,2})`)
+        new RegExp(`助理[：:】]?\\s*[「"]?([${surnameChars}][一-龥]{2})`),  // 3字名
+        new RegExp(`(律师|朋友|秘书|投资人).{0,8}([${surnameChars}][一-龥]{2})`),
+        new RegExp(`([${surnameChars}][一-龥]{2})冲进来|([${surnameChars}][一-龥]{2})说道`),
+        new RegExp(`(?:身边|身旁|对面).{0,5}([${surnameChars}][一-龥]{2})`)
       ]
       
       // Heroine
