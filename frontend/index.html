@@ -497,6 +497,46 @@
         opacity: 0; 
       }
     }
+    
+    /* Role Selection */
+    .role-selection {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .role-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 10px 16px;
+      background: rgba(255,255,255,0.2);
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+      color: white;
+    }
+    .role-btn:hover {
+      background: rgba(255,255,255,0.3);
+      transform: translateY(-2px);
+    }
+    .role-btn.active {
+      background: white;
+      color: #667eea;
+      border-color: white;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    .role-icon {
+      font-size: 24px;
+    }
+    .role-name {
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
     .character-speech {
       background: white;
       color: #333;
@@ -913,7 +953,28 @@
           
           <!-- Character Chat Section -->
           <div class="character-chat-section" id="character-chat-${novel._id}">
-            <h3 style="text-align: center; margin-bottom: 15px;">🎙️ 和女主对话</h3>
+            <h3 style="text-align: center; margin-bottom: 15px;">🎙️ 和角色对话</h3>
+            
+            <!-- Character Role Selection -->
+            <div class="role-selection" id="role-selection-${novel._id}">
+              <button class="role-btn active" data-role="heroine" data-novel="${novel._id}" onclick="selectChatRole('${novel._id}', 'heroine', this)">
+                <span class="role-icon">👩</span>
+                <span class="role-name">女主</span>
+              </button>
+              <button class="role-btn" data-role="hero" data-novel="${novel._id}" onclick="selectChatRole('${novel._id}', 'hero', this)">
+                <span class="role-icon">👨</span>
+                <span class="role-name">男主</span>
+              </button>
+              <button class="role-btn" data-role="villain" data-novel="${novel._id}" onclick="selectChatRole('${novel._id}', 'villain', this)">
+                <span class="role-icon">😈</span>
+                <span class="role-name">反派</span>
+              </button>
+              <button class="role-btn" data-role="supporting" data-novel="${novel._id}" onclick="selectChatRole('${novel._id}', 'supporting', this)">
+                <span class="role-icon">🧑</span>
+                <span class="role-name">配角</span>
+              </button>
+            </div>
+            <input type="hidden" id="chat-role-${novel._id}" value="heroine" />
             
             <!-- Character Display -->
             <div class="character-stage">
@@ -921,24 +982,20 @@
                 <div class="character-wrapper" id="character-wrapper-${novel._id}">
                   <img 
                     src="https://api.dicebear.com/7.x/lorelei/svg?seed=${novel._id}&backgroundColor=ffdfbf" 
-                    alt="女主" 
+                    alt="角色" 
                     class="character-image"
                     id="character-image-${novel._id}"
                   />
-                  <!-- Eye blink overlay -->
                   <div class="character-eyes">
                     <div class="character-eye"></div>
                     <div class="character-eye"></div>
                   </div>
-                  <!-- Mouth animation overlay -->
                   <div class="character-mouth"></div>
-                  <!-- Emotion particles -->
                   <div class="emotion-particles">
                     <span class="particle">✨</span>
                     <span class="particle">💕</span>
                     <span class="particle">🌸</span>
                   </div>
-                  <!-- Sound waves -->
                   <div class="sound-waves">
                     <div class="sound-wave"></div>
                     <div class="sound-wave"></div>
@@ -1154,11 +1211,63 @@
     // Store novel content for chat context
     const novelContents = {}
     
-    // Store character images (generated heroine images)
+    // Store character images by role (heroine, hero, villain, supporting)
     const characterImages = {}
     
     // Store current speech text for replay
     const currentSpeechTexts = {}
+    
+    // Store current chat role
+    const currentChatRoles = {}
+    
+    // Default avatar URLs for each role
+    const defaultAvatars = {
+      heroine: (id) => `https://api.dicebear.com/7.x/lorelei/svg?seed=${id}&backgroundColor=ffdfbf`,
+      hero: (id) => `https://api.dicebear.com/7.x/lorelei/svg?seed=${id}-hero&backgroundColor=b6e3f4&hair=short01,short02,short03`,
+      villain: (id) => `https://api.dicebear.com/7.x/lorelei/svg?seed=${id}-villain&backgroundColor=ffd5dc`,
+      supporting: (id) => `https://api.dicebear.com/7.x/lorelei/svg?seed=${id}-support&backgroundColor=d1d4f9`
+    }
+    
+    // Role display info
+    const roleInfo = {
+      heroine: { name: '女主', greeting: '嗨～点击下面的麦克风和我聊天吧～ 😊', voice: 'nova' },
+      hero: { name: '男主', greeting: '你好，有什么想和我说的吗？', voice: 'onyx' },
+      villain: { name: '反派', greeting: '哼，你来找我做什么？ 😏', voice: 'echo' },
+      supporting: { name: '配角', greeting: '啊，你想和我聊聊吗？', voice: 'alloy' }
+    }
+    
+    // Select chat role
+    function selectChatRole(novelId, role, btn) {
+      // Update hidden input
+      document.getElementById(`chat-role-${novelId}`).value = role
+      currentChatRoles[novelId] = role
+      
+      // Update button styles
+      document.querySelectorAll(`[data-novel="${novelId}"].role-btn`).forEach(b => {
+        b.classList.remove('active')
+      })
+      btn.classList.add('active')
+      
+      // Update character image
+      const charImg = document.getElementById(`character-image-${novelId}`)
+      const imageKey = `${novelId}-${role}`
+      if (characterImages[imageKey]) {
+        charImg.src = characterImages[imageKey]
+      } else {
+        charImg.src = defaultAvatars[role](novelId)
+      }
+      
+      // Update greeting
+      const speechText = document.getElementById(`speech-text-${novelId}`)
+      speechText.textContent = roleInfo[role].greeting
+      currentSpeechTexts[novelId] = roleInfo[role].greeting
+      
+      // Clear chat history for new role
+      if (chatHistories[novelId]) {
+        chatHistories[novelId] = []
+      }
+    }
+    window.selectChatRole = selectChatRole
     
     // Image type selection
     function selectImageType(novelId, type, btn) {
@@ -1269,13 +1378,20 @@
           throw new Error('No image in response')
         }
         
-        // If this is a heroine image, update the character chat display
-        if (imageType === 'heroine' && imageUrl) {
-          characterImages[novelId] = imageUrl
-          const charImg = document.getElementById(`character-image-${novelId}`)
-          if (charImg) {
-            charImg.src = imageUrl
-            charImg.style.borderRadius = '16px'
+        // Store image by role type and update character chat if matching
+        const roleTypes = ['heroine', 'hero', 'villain']
+        if (roleTypes.includes(imageType) && imageUrl) {
+          const imageKey = `${novelId}-${imageType}`
+          characterImages[imageKey] = imageUrl
+          
+          // If this matches the currently selected chat role, update the display
+          const currentRole = currentChatRoles[novelId] || 'heroine'
+          if (imageType === currentRole) {
+            const charImg = document.getElementById(`character-image-${novelId}`)
+            if (charImg) {
+              charImg.src = imageUrl
+              charImg.style.borderRadius = '16px'
+            }
           }
         }
         
@@ -1686,6 +1802,10 @@
       const message = input.value.trim()
       if (!message) return
       
+      // Get current chat role
+      const chatRole = currentChatRoles[novelId] || 'heroine'
+      const roleData = roleInfo[chatRole]
+      
       if (!chatHistories[novelId]) {
         chatHistories[novelId] = []
       }
@@ -1711,7 +1831,8 @@
             novelTitle,
             genre,
             novelContent: novelContents[novelId] || '',
-            chatHistory: chatHistories[novelId]
+            chatHistory: chatHistories[novelId],
+            characterRole: chatRole
           }),
         })
         
@@ -1734,7 +1855,7 @@
           const ttsResponse = await fetch(`${API_BASE_URL}/api/tts`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: reply, voice: 'nova' }),
+            body: JSON.stringify({ text: reply, voice: roleData.voice }),
           })
           
           if (ttsResponse.ok) {
@@ -1785,6 +1906,10 @@
       const charWrapper = document.getElementById(`character-wrapper-${novelId}`)
       const speakingIndicator = document.getElementById(`speaking-indicator-${novelId}`)
       
+      // Get current role's voice
+      const chatRole = currentChatRoles[novelId] || 'heroine'
+      const voice = roleInfo[chatRole]?.voice || 'nova'
+      
       if (currentAudio) {
         currentAudio.pause()
         currentAudio = null
@@ -1803,7 +1928,7 @@
         const response = await fetch(`${API_BASE_URL}/api/tts`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, voice: 'nova' }),
+          body: JSON.stringify({ text, voice }),
         })
         
         if (response.ok) {
