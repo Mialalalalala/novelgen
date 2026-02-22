@@ -1255,25 +1255,43 @@
     function extractCharacterNames(novelId, content) {
       if (!content) return null
       
-      // Common Chinese name patterns (2-3 characters)
-      const namePattern = /([林苏叶陆顾沈周王李张刘陈杨黄赵吴郑孙胡朱高何郭罗宋谢唐韩曹许邓萧][一-龥]{1,2})/g
-      const names = []
-      const nameCount = {}
+      const surnameChars = '林苏叶陆顾沈周王李张刘陈杨黄赵吴郑孙胡朱高何郭罗宋谢唐韩曹许邓萧程江冯陈褚卫蒋董魏薛雷贺倪汤殷罗毕郝安常'
       
-      // Count name occurrences
+      // 1) Count full names (2-3 chars, surname + given name)
+      const namePattern = new RegExp(`([${surnameChars}][一-龥]{1,2})`, 'g')
+      const nameCount = {}
       let match
       while ((match = namePattern.exec(content)) !== null) {
         const name = match[1]
-        nameCount[name] = (nameCount[name] || 0) + 1
+        if (name.length >= 2 && name.length <= 3) {
+          nameCount[name] = (nameCount[name] || 0) + 1
+        }
       }
       
-      // Sort by frequency
+      // 2) Count title forms (叶总、林小姐、陆先生) and merge into full name of same 姓
+      const titlePattern = new RegExp(`([${surnameChars}])(总|先生|小姐|女士|助理)`, 'g')
+      const titleCount = {}
+      while ((match = titlePattern.exec(content)) !== null) {
+        const key = match[1] + match[2]  // e.g. 叶总
+        titleCount[key] = (titleCount[key] || 0) + 1
+      }
+      
+      // 3) Merge 叶总 etc. into 叶景深 (same 姓, add title count to that full name)
+      for (const [titleKey, count] of Object.entries(titleCount)) {
+        const surname = titleKey[0]
+        const fullNamesWithSurname = Object.keys(nameCount).filter(n => n[0] === surname)
+        if (fullNamesWithSurname.length > 0) {
+          const mainName = fullNamesWithSurname.sort((a, b) => nameCount[b] - nameCount[a])[0]
+          nameCount[mainName] = (nameCount[mainName] || 0) + count
+        }
+      }
+      
+      // 4) Sort by frequency (include names that appear at least once)
       const sortedNames = Object.entries(nameCount)
-        .filter(([name, count]) => count >= 2 && name.length >= 2)
+        .filter(([name, count]) => count >= 1 && name.length >= 2)
         .sort((a, b) => b[1] - a[1])
         .map(([name]) => name)
       
-      // Assign roles based on context and frequency
       const characters = {
         heroine: null,
         hero: null,
@@ -1281,37 +1299,48 @@
         supporting: null
       }
       
-      // Look for specific role indicators
-      const heroinePatterns = [/女主[角是叫]?[：:】]?\s*([林苏叶陆顾沈周王李张刘陈杨黄赵吴郑孙胡朱高何郭罗宋谢唐韩曹许邓萧][一-龥]{1,2})/,
-                               /([林苏叶陆顾沈周王李张刘陈杨黄赵吴郑孙胡朱高何郭罗宋谢唐韩曹许邓萧][一-龥]{1,2}).{0,10}(女主|独立|聪明|坚强)/]
-      const heroPatterns = [/男主[角是叫]?[：:】]?\s*([林苏叶陆顾沈周王李张刘陈杨黄赵吴郑孙胡朱高何郭罗宋谢唐韩曹许邓萧][一-龥]{1,2})/,
-                            /([林苏叶陆顾沈周王李张刘陈杨黄赵吴郑孙胡朱高何郭罗宋谢唐韩曹许邓萧][一-龥]{1,2}).{0,10}(总裁|深情|英俊)/]
-      const villainPatterns = [/([林苏叶陆顾沈周王李张刘陈杨黄赵吴郑孙胡朱高何郭罗宋谢唐韩曹许邓萧][一-龥]{1,2}).{0,10}(反派|阴险|嫉妒|得意|白莲花|心机)/]
+      const heroinePatterns = [
+        new RegExp(`女主[角是叫]?[：:】]?\\s*([${surnameChars}][一-龥]{1,2})`),
+        new RegExp(`([${surnameChars}][一-龥]{1,2}).{0,15}(女主|独立|聪明|坚强|离婚|协议书|签字)`),
+        new RegExp(`([${surnameChars}][一-龥]{1,2})站在|([${surnameChars}][一-龥]{1,2})推开门`)
+      ]
+      const heroPatterns = [
+        new RegExp(`男主[角是叫]?[：:】]?\\s*([${surnameChars}][一-龥]{1,2})`),
+        new RegExp(`([${surnameChars}][一-龥]{1,2}).{0,15}(总裁|深情|英俊|丈夫|未婚夫)`),
+        new RegExp(`([${surnameChars}]总[，。].{0,5}[${surnameChars}][一-龥]{1,2})`),  // 叶总。叶景深
+        new RegExp(`([${surnameChars}]总|景深|景琛).{0,8}([${surnameChars}][一-龥]{1,2})`)
+      ]
+      const villainPatterns = [
+        new RegExp(`([${surnameChars}][一-龥]{1,2}).{0,10}(反派|阴险|嫉妒|得意|白莲花|心机|娇嫡|撞着|闺蜜|破坏)`),
+        new RegExp(`那个女人|另一个女人|她.{0,3}([${surnameChars}][一-龥]{1,2})`)
+      ]
+      const supportingPatterns = [
+        new RegExp(`助理[：:】]?\\s*[「"]?([${surnameChars}][一-龥]{1,2})`),
+        new RegExp(`(律师|朋友|秘书|投资人).{0,8}([${surnameChars}][一-龥]{1,2})`),
+        new RegExp(`([${surnameChars}][一-龥]{1,2})冲进来|([${surnameChars}][一-龥]{1,2})说道|([${surnameChars}][一-龥]{1,2})找上门`),
+        new RegExp(`(?:身边|身旁|对面).{0,5}([${surnameChars}][一-龥]{1,2})`)
+      ]
       
-      // Try to find heroine
+      // Heroine
       for (const pattern of heroinePatterns) {
-        const match = content.match(pattern)
-        if (match && match[1]) {
-          characters.heroine = match[1]
+        const m = content.match(pattern)
+        const name = m && (m[1] || m[2])
+        if (name && name.length >= 2) {
+          characters.heroine = name
           break
         }
       }
+      if (!characters.heroine && sortedNames.length > 0) characters.heroine = sortedNames[0]
       
-      // If not found, use first frequent female-sounding name or first name
-      if (!characters.heroine && sortedNames.length > 0) {
-        characters.heroine = sortedNames[0]
-      }
-      
-      // Try to find hero
+      // Hero (ensure 叶总 -> 叶景深: prefer full name that appears with 总)
       for (const pattern of heroPatterns) {
-        const match = content.match(pattern)
-        if (match && match[1] && match[1] !== characters.heroine) {
-          characters.hero = match[1]
+        const m = content.match(pattern)
+        const name = m && (m[1] || m[2])
+        if (name && name.length >= 2 && name !== characters.heroine) {
+          characters.hero = name
           break
         }
       }
-      
-      // If not found, use second most frequent name
       if (!characters.hero) {
         for (const name of sortedNames) {
           if (name !== characters.heroine) {
@@ -1321,16 +1350,15 @@
         }
       }
       
-      // Try to find villain
+      // Villain
       for (const pattern of villainPatterns) {
-        const match = content.match(pattern)
-        if (match && match[1] && match[1] !== characters.heroine && match[1] !== characters.hero) {
-          characters.villain = match[1]
+        const m = content.match(pattern)
+        const name = m && (m[1] || m[2])
+        if (name && name.length >= 2 && name !== characters.heroine && name !== characters.hero) {
+          characters.villain = name
           break
         }
       }
-      
-      // If not found, use third name
       if (!characters.villain) {
         for (const name of sortedNames) {
           if (name !== characters.heroine && name !== characters.hero) {
@@ -1340,12 +1368,28 @@
         }
       }
       
-      // Supporting character - fourth name
+      // Supporting: must have a name - use 4th from list or any other distinct name
       for (const name of sortedNames) {
         if (name !== characters.heroine && name !== characters.hero && name !== characters.villain) {
           characters.supporting = name
           break
         }
+      }
+      for (const pattern of supportingPatterns) {
+        if (characters.supporting) break
+        const m = content.match(pattern)
+        const name = m && (m[1] || m[2] || m[3])
+        if (name && name.length >= 2 && name !== characters.heroine && name !== characters.hero && name !== characters.villain) {
+          characters.supporting = name
+          break
+        }
+      }
+      if (!characters.supporting && sortedNames.length >= 4) {
+        characters.supporting = sortedNames[3]
+      }
+      // 若只有 3 个角色，配角也显示一个名字（取第三名，与反派可能同一人）
+      if (!characters.supporting && sortedNames.length >= 3) {
+        characters.supporting = sortedNames[2]
       }
       
       novelCharacters[novelId] = characters
