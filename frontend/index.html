@@ -290,6 +290,152 @@
       background: #4CAF50;
     }
     
+    /* Character Chat Section */
+    .character-chat-section {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 16px;
+      padding: 20px;
+      margin: 20px 0;
+      color: white;
+    }
+    .character-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .character-container {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      margin-bottom: 15px;
+    }
+    .character-image {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid white;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      transition: transform 0.3s;
+    }
+    .character-image.speaking {
+      animation: characterBounce 0.5s ease-in-out infinite;
+    }
+    @keyframes characterBounce {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    .character-speaking-indicator {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      width: 24px;
+      height: 24px;
+      background: #4CAF50;
+      border-radius: 50%;
+      display: none;
+      animation: pulse 1s infinite;
+    }
+    .character-speaking-indicator.active {
+      display: block;
+    }
+    .character-speech {
+      background: white;
+      color: #333;
+      padding: 15px 20px;
+      border-radius: 20px;
+      max-width: 90%;
+      position: relative;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .character-speech::before {
+      content: '';
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-bottom: 10px solid white;
+    }
+    .speech-text {
+      flex: 1;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    .speech-play-btn {
+      background: #667eea;
+      color: white;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .speech-play-btn:hover {
+      transform: scale(1.1);
+    }
+    .speech-play-btn.playing {
+      background: #4CAF50;
+    }
+    .character-input-area {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .character-voice-btn {
+      background: white;
+      border: none;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      font-size: 24px;
+      cursor: pointer;
+      transition: all 0.3s;
+      flex-shrink: 0;
+    }
+    .character-voice-btn:hover {
+      transform: scale(1.1);
+    }
+    .character-voice-btn.recording {
+      background: #ff4444;
+      animation: pulse 1s infinite;
+    }
+    .character-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 25px;
+      font-size: 14px;
+    }
+    .character-send-btn {
+      background: white;
+      color: #667eea;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 25px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .character-send-btn:hover {
+      transform: scale(1.05);
+    }
+    .character-status {
+      text-align: center;
+      font-size: 12px;
+      margin-top: 10px;
+      min-height: 20px;
+      opacity: 0.9;
+    }
+    
     /* Chat Interface */
     .chat-container {
       background: #f8f9fa;
@@ -606,45 +752,56 @@
               <div id="generated-image-${novel._id}" class="generated-image-container"></div>
             </div>
             
-            <!-- Voice Chat with Protagonist -->
-            <div class="feature-card" style="background: linear-gradient(135deg, #ff6b9d 0%, #c44569 100%);">
-              <h3>🎙️ 语音聊天</h3>
-              <p style="font-size: 12px; margin-bottom: 10px; opacity: 0.9;">点击麦克风，和女主真实对话</p>
-              <div class="chat-container" id="chat-container-${novel._id}">
-                <div class="chat-messages" id="chat-messages-${novel._id}">
-                  <div class="chat-message assistant">
-                    <div class="chat-avatar">👩</div>
-                    <div class="chat-bubble">嗨～我是这个故事的女主角！点击下面的麦克风和我说话吧～😊</div>
-                    <button class="play-voice-btn" onclick="playWelcomeVoice('${novel._id}')">🔊</button>
-                  </div>
-                </div>
-                <div class="chat-input-area">
-                  <button 
-                    class="voice-btn"
-                    onclick="startVoiceInput('${novel._id}', '${novel.title}', '${novel.genre}')"
-                    id="voice-btn-${novel._id}"
-                    title="按住说话"
-                  >
-                    🎤
-                  </button>
-                  <input 
-                    type="text" 
-                    class="chat-input" 
-                    id="chat-input-${novel._id}"
-                    placeholder="或输入文字消息..."
-                    onkeypress="if(event.key==='Enter')sendVoiceChat('${novel._id}', '${novel.title}', '${novel.genre}')"
-                  />
-                  <button 
-                    class="chat-send" 
-                    onclick="sendVoiceChat('${novel._id}', '${novel.title}', '${novel.genre}')"
-                    id="chat-send-${novel._id}"
-                  >
-                    发送
-                  </button>
-                </div>
-                <div id="voice-status-${novel._id}" class="voice-status"></div>
+          </div>
+          
+          <!-- Character Chat Section -->
+          <div class="character-chat-section" id="character-chat-${novel._id}">
+            <h3 style="text-align: center; margin-bottom: 15px;">🎙️ 和女主对话</h3>
+            
+            <!-- Character Display -->
+            <div class="character-stage">
+              <div class="character-container" id="character-container-${novel._id}">
+                <img 
+                  src="https://api.dicebear.com/7.x/lorelei/svg?seed=${novel._id}&backgroundColor=ffdfbf" 
+                  alt="女主" 
+                  class="character-image"
+                  id="character-image-${novel._id}"
+                />
+                <div class="character-speaking-indicator" id="speaking-indicator-${novel._id}"></div>
+              </div>
+              
+              <!-- Speech Bubble -->
+              <div class="character-speech" id="character-speech-${novel._id}">
+                <div class="speech-text" id="speech-text-${novel._id}">嗨～点击下面的麦克风和我聊天吧～ 😊</div>
+                <button class="speech-play-btn" id="speech-play-${novel._id}" onclick="playCurrentSpeech('${novel._id}')">🔊</button>
               </div>
             </div>
+            
+            <!-- Chat Input -->
+            <div class="character-input-area">
+              <button 
+                class="character-voice-btn"
+                onclick="startCharacterChat('${novel._id}', '${novel.title}', '${novel.genre}')"
+                id="char-voice-btn-${novel._id}"
+              >
+                🎤
+              </button>
+              <input 
+                type="text" 
+                class="character-input" 
+                id="char-input-${novel._id}"
+                placeholder="输入消息或点击麦克风说话..."
+                onkeypress="if(event.key==='Enter')sendCharacterChat('${novel._id}', '${novel.title}', '${novel.genre}')"
+              />
+              <button 
+                class="character-send-btn" 
+                onclick="sendCharacterChat('${novel._id}', '${novel.title}', '${novel.genre}')"
+                id="char-send-${novel._id}"
+              >
+                发送
+              </button>
+            </div>
+            <div id="char-status-${novel._id}" class="character-status"></div>
           </div>
           
           <!-- Novel Continuation -->
@@ -817,6 +974,12 @@
     // Store novel content for chat context
     const novelContents = {}
     
+    // Store character images (generated heroine images)
+    const characterImages = {}
+    
+    // Store current speech text for replay
+    const currentSpeechTexts = {}
+    
     // Image type selection
     function selectImageType(novelId, type, btn) {
       // Update hidden input
@@ -909,18 +1072,31 @@
         
         const data = await response.json()
         
+        let imageUrl = null
         if (data.imageUrl) {
+          imageUrl = data.imageUrl
           container.innerHTML = `
             <img src="${data.imageUrl}" alt="Generated scene" class="generated-image" />
             <p style="color: white; font-size: 12px; margin-top: 10px;">✨ 生成成功！</p>
           `
         } else if (data.imageData) {
+          imageUrl = `data:${data.mimeType};base64,${data.imageData}`
           container.innerHTML = `
-            <img src="data:${data.mimeType};base64,${data.imageData}" alt="Generated scene" class="generated-image" />
+            <img src="${imageUrl}" alt="Generated scene" class="generated-image" />
             <p style="color: white; font-size: 12px; margin-top: 10px;">✨ 生成成功！</p>
           `
         } else {
           throw new Error('No image in response')
+        }
+        
+        // If this is a heroine image, update the character chat display
+        if (imageType === 'heroine' && imageUrl) {
+          characterImages[novelId] = imageUrl
+          const charImg = document.getElementById(`character-image-${novelId}`)
+          if (charImg) {
+            charImg.src = imageUrl
+            charImg.style.borderRadius = '16px'
+          }
         }
         
         promptInput.value = ''
@@ -1254,6 +1430,231 @@
     window.sendVoiceChat = sendVoiceChat
     window.playVoice = playVoice
     window.playWelcomeVoice = playWelcomeVoice
+    
+    // ========== Character Chat Functions ==========
+    
+    // Start character voice input
+    function startCharacterChat(novelId, novelTitle, genre) {
+      const btn = document.getElementById(`char-voice-btn-${novelId}`)
+      const status = document.getElementById(`char-status-${novelId}`)
+      
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+      if (!SpeechRecognition) {
+        status.textContent = '❌ 浏览器不支持语音识别，请使用 Chrome'
+        return
+      }
+      
+      if (currentRecognition) {
+        currentRecognition.stop()
+        return
+      }
+      
+      const recognition = new SpeechRecognition()
+      recognition.lang = 'zh-CN'
+      recognition.continuous = false
+      recognition.interimResults = true
+      
+      recognition.onstart = () => {
+        btn.classList.add('recording')
+        btn.textContent = '⏹️'
+        status.textContent = '🎤 我在听...'
+      }
+      
+      recognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map(result => result[0].transcript)
+          .join('')
+        document.getElementById(`char-input-${novelId}`).value = transcript
+        status.textContent = `📝 ${transcript}`
+      }
+      
+      recognition.onend = () => {
+        btn.classList.remove('recording')
+        btn.textContent = '🎤'
+        currentRecognition = null
+        
+        const input = document.getElementById(`char-input-${novelId}`)
+        if (input.value.trim()) {
+          sendCharacterChat(novelId, novelTitle, genre)
+        } else {
+          status.textContent = ''
+        }
+      }
+      
+      recognition.onerror = (event) => {
+        btn.classList.remove('recording')
+        btn.textContent = '🎤'
+        status.textContent = `❌ ${event.error}`
+        currentRecognition = null
+      }
+      
+      currentRecognition = recognition
+      recognition.start()
+    }
+    
+    // Send character chat message
+    async function sendCharacterChat(novelId, novelTitle, genre) {
+      const input = document.getElementById(`char-input-${novelId}`)
+      const sendBtn = document.getElementById(`char-send-${novelId}`)
+      const voiceBtn = document.getElementById(`char-voice-btn-${novelId}`)
+      const speechText = document.getElementById(`speech-text-${novelId}`)
+      const speechPlay = document.getElementById(`speech-play-${novelId}`)
+      const charImg = document.getElementById(`character-image-${novelId}`)
+      const speakingIndicator = document.getElementById(`speaking-indicator-${novelId}`)
+      const status = document.getElementById(`char-status-${novelId}`)
+      
+      const message = input.value.trim()
+      if (!message) return
+      
+      if (!chatHistories[novelId]) {
+        chatHistories[novelId] = []
+      }
+      
+      chatHistories[novelId].push({ role: 'user', content: message })
+      input.value = ''
+      sendBtn.disabled = true
+      voiceBtn.disabled = true
+      
+      // Show thinking state
+      speechText.textContent = '让我想想...'
+      charImg.classList.add('speaking')
+      speakingIndicator.classList.add('active')
+      status.textContent = '🤔 思考中...'
+      
+      try {
+        const chatResponse = await fetch(`${API_BASE_URL}/api/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            message,
+            novelTitle,
+            genre,
+            novelContent: novelContents[novelId] || '',
+            chatHistory: chatHistories[novelId]
+          }),
+        })
+        
+        if (!chatResponse.ok) throw new Error('Chat failed')
+        
+        const chatData = await chatResponse.json()
+        const reply = chatData.reply
+        
+        // Update speech bubble
+        speechText.textContent = reply
+        currentSpeechTexts[novelId] = reply
+        chatHistories[novelId].push({ role: 'assistant', content: reply })
+        
+        // Generate and play voice
+        status.textContent = '🔊 生成语音中...'
+        
+        try {
+          const ttsResponse = await fetch(`${API_BASE_URL}/api/tts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: reply, voice: 'nova' }),
+          })
+          
+          if (ttsResponse.ok) {
+            const ttsData = await ttsResponse.json()
+            if (ttsData.audio) {
+              const audio = new Audio(`data:${ttsData.mimeType};base64,${ttsData.audio}`)
+              currentAudio = audio
+              
+              speechPlay.classList.add('playing')
+              speechPlay.textContent = '⏸️'
+              status.textContent = ''
+              
+              audio.onended = () => {
+                speechPlay.classList.remove('playing')
+                speechPlay.textContent = '🔊'
+                charImg.classList.remove('speaking')
+                speakingIndicator.classList.remove('active')
+                currentAudio = null
+              }
+              
+              await audio.play()
+            }
+          }
+        } catch (ttsError) {
+          console.error('TTS error:', ttsError)
+          charImg.classList.remove('speaking')
+          speakingIndicator.classList.remove('active')
+        }
+        
+        status.textContent = ''
+        
+      } catch (error) {
+        console.error('Character chat error:', error)
+        speechText.textContent = '抱歉，我现在有点问题... 💔'
+        charImg.classList.remove('speaking')
+        speakingIndicator.classList.remove('active')
+        status.textContent = ''
+      } finally {
+        sendBtn.disabled = false
+        voiceBtn.disabled = false
+      }
+    }
+    
+    // Play current speech
+    async function playCurrentSpeech(novelId) {
+      const text = currentSpeechTexts[novelId] || '嗨～点击下面的麦克风和我聊天吧～'
+      const speechPlay = document.getElementById(`speech-play-${novelId}`)
+      const charImg = document.getElementById(`character-image-${novelId}`)
+      const speakingIndicator = document.getElementById(`speaking-indicator-${novelId}`)
+      
+      if (currentAudio) {
+        currentAudio.pause()
+        currentAudio = null
+        speechPlay.classList.remove('playing')
+        speechPlay.textContent = '🔊'
+        charImg.classList.remove('speaking')
+        speakingIndicator.classList.remove('active')
+        return
+      }
+      
+      speechPlay.textContent = '⏳'
+      charImg.classList.add('speaking')
+      speakingIndicator.classList.add('active')
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/tts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, voice: 'nova' }),
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          if (data.audio) {
+            const audio = new Audio(`data:${data.mimeType};base64,${data.audio}`)
+            currentAudio = audio
+            
+            speechPlay.classList.add('playing')
+            speechPlay.textContent = '⏸️'
+            
+            audio.onended = () => {
+              speechPlay.classList.remove('playing')
+              speechPlay.textContent = '🔊'
+              charImg.classList.remove('speaking')
+              speakingIndicator.classList.remove('active')
+              currentAudio = null
+            }
+            
+            await audio.play()
+          }
+        }
+      } catch (error) {
+        console.error('Play speech error:', error)
+        speechPlay.textContent = '🔊'
+        charImg.classList.remove('speaking')
+        speakingIndicator.classList.remove('active')
+      }
+    }
+    
+    // Make character chat functions globally available
+    window.startCharacterChat = startCharacterChat
+    window.sendCharacterChat = sendCharacterChat
+    window.playCurrentSpeech = playCurrentSpeech
     
     // Continue Novel
     async function continueNovel(novelId, novelTitle, genre) {
