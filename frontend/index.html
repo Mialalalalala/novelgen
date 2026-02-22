@@ -242,6 +242,54 @@
       font-weight: bold;
     }
     
+    /* Voice Chat */
+    .voice-btn {
+      background: #fff;
+      border: none;
+      width: 50px;
+      height: 40px;
+      border-radius: 20px;
+      font-size: 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+      flex-shrink: 0;
+    }
+    .voice-btn:hover {
+      transform: scale(1.1);
+    }
+    .voice-btn.recording {
+      background: #ff4444;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    .voice-status {
+      text-align: center;
+      font-size: 12px;
+      color: rgba(255,255,255,0.8);
+      margin-top: 8px;
+      min-height: 20px;
+    }
+    .play-voice-btn {
+      background: rgba(255,255,255,0.3);
+      border: none;
+      padding: 4px 8px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-left: 8px;
+      transition: all 0.2s;
+    }
+    .play-voice-btn:hover {
+      background: rgba(255,255,255,0.5);
+    }
+    .play-voice-btn.playing {
+      background: #4CAF50;
+    }
+    
     /* Chat Interface */
     .chat-container {
       background: #f8f9fa;
@@ -558,32 +606,43 @@
               <div id="generated-image-${novel._id}" class="generated-image-container"></div>
             </div>
             
-            <!-- Chat with Protagonist -->
+            <!-- Voice Chat with Protagonist -->
             <div class="feature-card" style="background: linear-gradient(135deg, #ff6b9d 0%, #c44569 100%);">
-              <h3>💬 和女主聊天</h3>
+              <h3>🎙️ 语音聊天</h3>
+              <p style="font-size: 12px; margin-bottom: 10px; opacity: 0.9;">点击麦克风，和女主真实对话</p>
               <div class="chat-container" id="chat-container-${novel._id}">
                 <div class="chat-messages" id="chat-messages-${novel._id}">
                   <div class="chat-message assistant">
                     <div class="chat-avatar">👩</div>
-                    <div class="chat-bubble">嗨～我是这个故事的女主角！有什么想问我的吗？😊</div>
+                    <div class="chat-bubble">嗨～我是这个故事的女主角！点击下面的麦克风和我说话吧～😊</div>
+                    <button class="play-voice-btn" onclick="playWelcomeVoice('${novel._id}')">🔊</button>
                   </div>
                 </div>
                 <div class="chat-input-area">
+                  <button 
+                    class="voice-btn"
+                    onclick="startVoiceInput('${novel._id}', '${novel.title}', '${novel.genre}')"
+                    id="voice-btn-${novel._id}"
+                    title="按住说话"
+                  >
+                    🎤
+                  </button>
                   <input 
                     type="text" 
                     class="chat-input" 
                     id="chat-input-${novel._id}"
-                    placeholder="输入消息..."
-                    onkeypress="if(event.key==='Enter')sendChat('${novel._id}', '${novel.title}', '${novel.genre}')"
+                    placeholder="或输入文字消息..."
+                    onkeypress="if(event.key==='Enter')sendVoiceChat('${novel._id}', '${novel.title}', '${novel.genre}')"
                   />
                   <button 
                     class="chat-send" 
-                    onclick="sendChat('${novel._id}', '${novel.title}', '${novel.genre}')"
+                    onclick="sendVoiceChat('${novel._id}', '${novel.title}', '${novel.genre}')"
                     id="chat-send-${novel._id}"
                   >
                     发送
                   </button>
                 </div>
+                <div id="voice-status-${novel._id}" class="voice-status"></div>
               </div>
             </div>
           </div>
@@ -961,6 +1020,240 @@
         messagesContainer.scrollTop = messagesContainer.scrollHeight
       }
     }
+    
+    // Voice Chat Functions
+    let currentRecognition = null
+    let currentAudio = null
+    
+    // Start voice input
+    function startVoiceInput(novelId, novelTitle, genre) {
+      const btn = document.getElementById(`voice-btn-${novelId}`)
+      const status = document.getElementById(`voice-status-${novelId}`)
+      
+      // Check for browser support
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+      if (!SpeechRecognition) {
+        status.textContent = '❌ 浏览器不支持语音识别，请使用 Chrome'
+        return
+      }
+      
+      // If already recording, stop
+      if (currentRecognition) {
+        currentRecognition.stop()
+        return
+      }
+      
+      const recognition = new SpeechRecognition()
+      recognition.lang = 'zh-CN'
+      recognition.continuous = false
+      recognition.interimResults = true
+      
+      recognition.onstart = () => {
+        btn.classList.add('recording')
+        btn.textContent = '⏹️'
+        status.textContent = '🎤 正在听...'
+      }
+      
+      recognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map(result => result[0].transcript)
+          .join('')
+        
+        document.getElementById(`chat-input-${novelId}`).value = transcript
+        status.textContent = `📝 ${transcript}`
+      }
+      
+      recognition.onend = () => {
+        btn.classList.remove('recording')
+        btn.textContent = '🎤'
+        currentRecognition = null
+        
+        const input = document.getElementById(`chat-input-${novelId}`)
+        if (input.value.trim()) {
+          status.textContent = '✅ 识别完成，发送中...'
+          sendVoiceChat(novelId, novelTitle, genre)
+        } else {
+          status.textContent = ''
+        }
+      }
+      
+      recognition.onerror = (event) => {
+        btn.classList.remove('recording')
+        btn.textContent = '🎤'
+        status.textContent = `❌ 识别失败: ${event.error}`
+        currentRecognition = null
+      }
+      
+      currentRecognition = recognition
+      recognition.start()
+    }
+    
+    // Send voice chat (with TTS response)
+    async function sendVoiceChat(novelId, novelTitle, genre) {
+      const input = document.getElementById(`chat-input-${novelId}`)
+      const btn = document.getElementById(`chat-send-${novelId}`)
+      const voiceBtn = document.getElementById(`voice-btn-${novelId}`)
+      const messagesContainer = document.getElementById(`chat-messages-${novelId}`)
+      const status = document.getElementById(`voice-status-${novelId}`)
+      
+      const message = input.value.trim()
+      if (!message) return
+      
+      if (!chatHistories[novelId]) {
+        chatHistories[novelId] = []
+      }
+      
+      // Add user message
+      messagesContainer.innerHTML += `
+        <div class="chat-message user">
+          <div class="chat-avatar">🙋</div>
+          <div class="chat-bubble">${message}</div>
+        </div>
+      `
+      
+      chatHistories[novelId].push({ role: 'user', content: message })
+      input.value = ''
+      btn.disabled = true
+      voiceBtn.disabled = true
+      messagesContainer.scrollTop = messagesContainer.scrollHeight
+      
+      const typingId = `typing-${Date.now()}`
+      messagesContainer.innerHTML += `
+        <div class="chat-message assistant" id="${typingId}">
+          <div class="chat-avatar">👩</div>
+          <div class="chat-bubble">正在思考...</div>
+        </div>
+      `
+      messagesContainer.scrollTop = messagesContainer.scrollHeight
+      
+      try {
+        // Get chat response
+        const chatResponse = await fetch(`${API_BASE_URL}/api/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            message,
+            novelTitle,
+            genre,
+            novelContent: novelContents[novelId] || '',
+            chatHistory: chatHistories[novelId]
+          }),
+        })
+        
+        document.getElementById(typingId)?.remove()
+        
+        if (!chatResponse.ok) {
+          throw new Error('Chat failed')
+        }
+        
+        const chatData = await chatResponse.json()
+        const reply = chatData.reply
+        
+        // Add reply with play button
+        const replyId = `reply-${Date.now()}`
+        messagesContainer.innerHTML += `
+          <div class="chat-message assistant">
+            <div class="chat-avatar">👩</div>
+            <div class="chat-bubble">${reply}</div>
+            <button class="play-voice-btn" id="play-${replyId}" onclick="playVoice('${replyId}', \`${reply.replace(/`/g, "'").replace(/\\/g, "\\\\")}\`)">🔊</button>
+          </div>
+        `
+        
+        chatHistories[novelId].push({ role: 'assistant', content: reply })
+        messagesContainer.scrollTop = messagesContainer.scrollHeight
+        
+        // Auto-play the response
+        status.textContent = '🔊 正在生成语音...'
+        await playVoice(replyId, reply)
+        status.textContent = ''
+        
+      } catch (error) {
+        console.error('Voice chat error:', error)
+        document.getElementById(typingId)?.remove()
+        messagesContainer.innerHTML += `
+          <div class="chat-message assistant">
+            <div class="chat-avatar">👩</div>
+            <div class="chat-bubble">抱歉，我暂时无法回复... 💔</div>
+          </div>
+        `
+        status.textContent = ''
+      } finally {
+        btn.disabled = false
+        voiceBtn.disabled = false
+        messagesContainer.scrollTop = messagesContainer.scrollHeight
+      }
+    }
+    
+    // Play voice (TTS)
+    async function playVoice(replyId, text) {
+      const playBtn = document.getElementById(`play-${replyId}`)
+      
+      // Stop any currently playing audio
+      if (currentAudio) {
+        currentAudio.pause()
+        currentAudio = null
+        document.querySelectorAll('.play-voice-btn').forEach(b => {
+          b.classList.remove('playing')
+          b.textContent = '🔊'
+        })
+      }
+      
+      if (playBtn) {
+        playBtn.classList.add('playing')
+        playBtn.textContent = '⏳'
+      }
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/tts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, voice: 'nova' }),
+        })
+        
+        if (!response.ok) {
+          throw new Error('TTS failed')
+        }
+        
+        const data = await response.json()
+        
+        if (data.audio) {
+          const audio = new Audio(`data:${data.mimeType};base64,${data.audio}`)
+          currentAudio = audio
+          
+          if (playBtn) {
+            playBtn.textContent = '⏸️'
+          }
+          
+          audio.onended = () => {
+            if (playBtn) {
+              playBtn.classList.remove('playing')
+              playBtn.textContent = '🔊'
+            }
+            currentAudio = null
+          }
+          
+          await audio.play()
+        }
+      } catch (error) {
+        console.error('TTS error:', error)
+        if (playBtn) {
+          playBtn.classList.remove('playing')
+          playBtn.textContent = '🔊'
+        }
+      }
+    }
+    
+    // Play welcome voice
+    async function playWelcomeVoice(novelId) {
+      const welcomeText = '嗨～我是这个故事的女主角！点击麦克风和我说话吧～'
+      await playVoice(`welcome-${novelId}`, welcomeText)
+    }
+    
+    // Make voice functions globally available
+    window.startVoiceInput = startVoiceInput
+    window.sendVoiceChat = sendVoiceChat
+    window.playVoice = playVoice
+    window.playWelcomeVoice = playWelcomeVoice
     
     // Continue Novel
     async function continueNovel(novelId, novelTitle, genre) {

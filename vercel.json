@@ -28,6 +28,10 @@
       "dest": "/api/continue-novel.js"
     },
     {
+      "src": "/api/tts",
+      "dest": "/api/tts.js"
+    },
+    {
       "src": "/(.*)",
       "dest": "/frontend/$1"
     }
