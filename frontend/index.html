@@ -1693,6 +1693,8 @@
             </div>
           </div>
 
+          <div class="novel-content" id="novel-content"></div>
+
           <!-- Interactive Features -->
           <div class="interactive-section">
             <!-- Image Generation -->
@@ -1838,29 +1840,6 @@
               <div id="continuation-text-${novel._id}"></div>
             </div>
           </div>
-
-          ${novel.scenes && novel.scenes.length > 0 ? `
-            <div class="scenes-section">
-              <div class="scenes-title">🎨 AI 生成场景图</div>
-              <div class="scenes-grid">
-                ${novel.scenes.filter(s => s.status === 'completed' && s.imageUrl).map(scene => `
-                  <div class="scene-card">
-                    <img
-                      src="${scene.imageUrl}"
-                      alt="${scene.title || 'Scene'}"
-                      onerror="this.src='https://via.placeholder.com/400x300?text=Image+Not+Available'"
-                    />
-                    <div class="scene-card-info">
-                      <h4>${scene.title || '场景'}</h4>
-                      ${scene.description ? `<p>${scene.description.substring(0, 80)}...</p>` : ''}
-                    </div>
-                  </div>
-                `).join('')}
-              </div>
-            </div>
-          ` : ''}
-
-          <div class="novel-content" id="novel-content"></div>
 
           <div class="purchase-form">
             <h3>立即购买</h3>
