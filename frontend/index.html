@@ -698,6 +698,7 @@
       padding: 20px;
       color: white;
       backdrop-filter: blur(20px);
+      margin: 16px 0;
     }
 
     .feature-card h3 {
@@ -1836,11 +1837,9 @@
 
           <div class="novel-content" id="novel-content"></div>
 
-          <!-- Interactive Features -->
-          <div class="interactive-section">
-            <!-- Image Generation -->
-            <div class="feature-card">
-              <h3>🎨 AI 绘图</h3>
+          <!-- Image Generation -->
+          <div class="feature-card">
+            <h3>🎨 AI 绘图</h3>
               <p style="font-size: 11px; margin-bottom: 10px; color: rgba(255,255,255,0.65);">根据小说内容生成专属图片</p>
 
               <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px;">
@@ -1868,8 +1867,6 @@
                 ✨ 生成图片
               </button>
               <div id="generated-image-${novel._id}" class="generated-image-container"></div>
-            </div>
-
           </div>
 
           <!-- Character Chat Section -->
