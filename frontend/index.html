@@ -1238,23 +1238,182 @@
 
     /* ===== NOVEL CONTENT ===== */
     .novel-content {
-      line-height: 1.9;
+      line-height: 1.95;
       color: var(--text-secondary);
-      font-size: 13px;
+      font-size: 14px;
       margin: 16px 0;
-      padding: 16px;
-      background: rgba(255,255,255,0.025);
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,0.06);
-      max-height: 280px;
-      overflow-y: auto;
     }
-
-    .novel-content p { margin-bottom: 10px; }
 
     .novel-content h2, .novel-content h3 {
       color: var(--text-primary);
-      margin: 14px 0 7px;
+      margin: 18px 0 8px;
+      font-size: 16px;
+    }
+
+    /* Paragraph interaction */
+    .novel-content p {
+      padding: 10px 12px;
+      margin: 0 -12px 2px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+      border-left: 2px solid transparent;
+      position: relative;
+    }
+
+    .novel-content p:hover {
+      background: rgba(102,126,234,0.08);
+      color: rgba(255,255,255,0.8);
+    }
+
+    .novel-content p.para-selected {
+      background: rgba(102,126,234,0.13);
+      border-left-color: rgba(167,139,250,0.6);
+      color: white;
+    }
+
+    .para-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Inline paragraph chat panel */
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .para-chat-panel {
+      background: rgba(10,8,24,0.97);
+      border: 1px solid rgba(102,126,234,0.28);
+      border-radius: 16px;
+      padding: 14px;
+      margin: 8px 0 12px;
+      animation: slideDown 0.2s ease;
+    }
+
+    .para-chat-context {
+      font-size: 11px;
+      color: rgba(167,139,250,0.85);
+      margin-bottom: 10px;
+      padding: 7px 10px;
+      background: rgba(102,126,234,0.1);
+      border-radius: 8px;
+      border-left: 2px solid rgba(167,139,250,0.4);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      font-style: italic;
+    }
+
+    .para-role-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .para-role-tab {
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.09);
+      background: rgba(255,255,255,0.04);
+      color: rgba(255,255,255,0.5);
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .para-role-tab.active {
+      background: linear-gradient(135deg, rgba(102,126,234,0.4), rgba(240,147,251,0.3));
+      border-color: rgba(167,139,250,0.4);
+      color: white;
+    }
+
+    .para-chat-messages {
+      max-height: 180px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .para-chat-messages::-webkit-scrollbar { width: 3px; }
+    .para-chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+
+    .para-msg {
+      font-size: 13px;
+      line-height: 1.5;
+      padding: 8px 12px;
+      border-radius: 12px;
+      max-width: 88%;
+    }
+
+    .para-msg.user {
+      background: linear-gradient(135deg, rgba(102,126,234,0.35), rgba(240,147,251,0.25));
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 3px;
+    }
+
+    .para-msg.assistant {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--text-primary);
+      align-self: flex-start;
+      border-bottom-left-radius: 3px;
+    }
+
+    .para-chat-input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .para-chat-input {
+      flex: 1;
+      padding: 9px 14px;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 20px;
+      font-size: 13px;
+      color: white;
+      font-family: inherit;
+    }
+
+    .para-chat-input::placeholder { color: rgba(255,255,255,0.25); }
+
+    .para-chat-input:focus {
+      outline: none;
+      border-color: rgba(102,126,234,0.45);
+    }
+
+    .para-chat-send {
+      background: linear-gradient(135deg, var(--grad-purple), var(--grad-pink));
+      color: white;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+      box-shadow: 0 4px 14px rgba(102,126,234,0.35);
+    }
+
+    .para-chat-status {
+      font-size: 11px;
+      color: rgba(255,255,255,0.38);
+      margin-top: 6px;
+      min-height: 16px;
     }
 
     /* ===== PURCHASE FORM ===== */
@@ -1835,7 +1994,8 @@
             </div>
           </div>
 
-          <div class="novel-content" id="novel-content"></div>
+          <div class="para-hint">💬 点击任意段落，直接和角色聊这一段剧情</div>
+          <div class="novel-content" id="novel-content" data-novel-id="${novel._id}" data-novel-title="${novel.title || ''}" data-novel-genre="${novel.genre || ''}"></div>
 
           <!-- Image Generation -->
           <div class="feature-card">
@@ -1867,92 +2027,6 @@
                 ✨ 生成图片
               </button>
               <div id="generated-image-${novel._id}" class="generated-image-container"></div>
-          </div>
-
-          <!-- Character Chat Section -->
-          <div class="character-chat-section" id="character-chat-${novel._id}">
-            <h3>🎙️ 和角色对话</h3>
-
-            <div class="role-selection" id="role-selection-${novel._id}">
-              <button class="role-btn active" data-role="heroine" data-novel="${novel._id}" onclick="selectChatRole('${novel._id}', 'heroine', this)">
-                <span class="role-icon">👩</span>
-                <span class="role-name">女主</span>
-              </button>
-              <button class="role-btn" data-role="hero" data-novel="${novel._id}" onclick="selectChatRole('${novel._id}', 'hero', this)">
-                <span class="role-icon">👨</span>
-                <span class="role-name">男主</span>
-              </button>
-              <button class="role-btn" data-role="villain" data-novel="${novel._id}" onclick="selectChatRole('${novel._id}', 'villain', this)">
-                <span class="role-icon">😈</span>
-                <span class="role-name">反派</span>
-              </button>
-              <button class="role-btn" data-role="supporting" data-novel="${novel._id}" onclick="selectChatRole('${novel._id}', 'supporting', this)">
-                <span class="role-icon">🧑</span>
-                <span class="role-name">配角</span>
-              </button>
-            </div>
-            <input type="hidden" id="chat-role-${novel._id}" value="heroine" />
-
-            <div class="character-stage">
-              <div class="character-container" id="character-container-${novel._id}">
-                <div class="character-wrapper" id="character-wrapper-${novel._id}">
-                  <img
-                    src="https://api.dicebear.com/7.x/lorelei/svg?seed=${novel._id}&backgroundColor=ffdfbf"
-                    alt="角色"
-                    class="character-image"
-                    id="character-image-${novel._id}"
-                  />
-                  <div class="character-eyes">
-                    <div class="character-eye"></div>
-                    <div class="character-eye"></div>
-                  </div>
-                  <div class="character-mouth"></div>
-                  <div class="emotion-particles">
-                    <span class="particle">✨</span>
-                    <span class="particle">💕</span>
-                    <span class="particle">🌸</span>
-                  </div>
-                  <div class="sound-waves">
-                    <div class="sound-wave"></div>
-                    <div class="sound-wave"></div>
-                    <div class="sound-wave"></div>
-                    <div class="sound-wave"></div>
-                    <div class="sound-wave"></div>
-                  </div>
-                </div>
-                <div class="character-speaking-indicator" id="speaking-indicator-${novel._id}"></div>
-              </div>
-
-              <div class="character-speech" id="character-speech-${novel._id}">
-                <div class="speech-text" id="speech-text-${novel._id}">嗨～点击下面的麦克风和我聊天吧～ 😊</div>
-                <button class="speech-play-btn" id="speech-play-${novel._id}" onclick="playCurrentSpeech('${novel._id}')">🔊</button>
-              </div>
-            </div>
-
-            <div class="character-input-area">
-              <button
-                class="character-voice-btn"
-                onclick="startCharacterChat('${novel._id}', '${novel.title}', '${novel.genre}')"
-                id="char-voice-btn-${novel._id}"
-              >
-                🎤
-              </button>
-              <input
-                type="text"
-                class="character-input"
-                id="char-input-${novel._id}"
-                placeholder="输入消息或点击麦克风说话..."
-                onkeypress="if(event.key==='Enter')sendCharacterChat('${novel._id}', '${novel.title}', '${novel.genre}')"
-              />
-              <button
-                class="character-send-btn"
-                onclick="sendCharacterChat('${novel._id}', '${novel.title}', '${novel.genre}')"
-                id="char-send-${novel._id}"
-              >
-                发送
-              </button>
-            </div>
-            <div id="char-status-${novel._id}" class="character-status"></div>
           </div>
 
           <!-- Novel Continuation -->
@@ -2008,11 +2082,13 @@
 
         // Render novel content
         if (novel.content && novel.content.length > 0) {
-          renderContent(novel.content, document.getElementById('novel-content'))
           novelContents[novel._id] = extractTextFromBlocks(novel.content)
 
           const characters = extractCharacterNames(novel._id, novelContents[novel._id])
+          novelCharacters[novel._id] = characters
           updateRoleButtons(novel._id, characters)
+
+          renderContent(novel.content, document.getElementById('novel-content'))
 
           const speechText = document.getElementById(`speech-text-${novel._id}`)
           if (speechText && characters?.heroine) {
@@ -2051,6 +2127,10 @@
     function renderContent(blocks, container) {
       if (!blocks || blocks.length === 0) return
 
+      const novelId = container.dataset.novelId || ''
+      const novelTitle = container.dataset.novelTitle || ''
+      const genre = container.dataset.novelGenre || ''
+
       blocks.forEach(block => {
         if (block._type === 'block') {
           const tag = block.style === 'h1' ? 'h2' : block.style === 'h2' ? 'h3' : 'p'
@@ -2063,6 +2143,10 @@
                 element.appendChild(text)
               }
             })
+          }
+
+          if (tag === 'p' && element.textContent.trim()) {
+            element.addEventListener('click', () => toggleParaChat(element, novelId, novelTitle, genre))
           }
 
           container.appendChild(element)
@@ -3072,6 +3156,156 @@
     window.generateSceneImage = generateSceneImage
     window.sendChat = sendChat
     window.continueNovel = continueNovel
+
+    // ========== Paragraph-level inline chat ==========
+    // Stores context keyed by panelId: { novelId, novelTitle, genre, paraText, history, role }
+    const paraChatContexts = {}
+
+    function toggleParaChat(paraEl, novelId, novelTitle, genre) {
+      const existingPanel = paraEl.nextElementSibling
+      if (existingPanel && existingPanel.classList.contains('para-chat-panel')) {
+        // Close: remove panel, deselect paragraph
+        existingPanel.remove()
+        paraEl.classList.remove('para-selected')
+        return
+      }
+
+      // Close any other open panels first
+      document.querySelectorAll('.para-chat-panel').forEach(p => p.remove())
+      document.querySelectorAll('.novel-content p.para-selected').forEach(p => p.classList.remove('para-selected'))
+
+      paraEl.classList.add('para-selected')
+
+      const panelId = `para-panel-${Date.now()}`
+      const paraText = paraEl.textContent.trim()
+      const snippet = paraText.length > 60 ? paraText.slice(0, 60) + '…' : paraText
+
+      // Get character names for role buttons
+      const chars = novelCharacters[novelId] || {}
+      const roles = [
+        { key: 'heroine', label: chars.heroine ? `女主 · ${chars.heroine}` : '女主' },
+        { key: 'hero',    label: chars.hero    ? `男主 · ${chars.hero}`    : '男主' },
+        { key: 'villain', label: chars.villain ? `反派 · ${chars.villain}` : '反派' },
+      ]
+
+      paraChatContexts[panelId] = {
+        novelId, novelTitle, genre, paraText,
+        history: [],
+        role: 'heroine'
+      }
+
+      const panel = document.createElement('div')
+      panel.className = 'para-chat-panel'
+      panel.id = panelId
+      panel.innerHTML = `
+        <div class="para-chat-context">"${snippet}"</div>
+        <div class="para-role-tabs">
+          ${roles.map((r, i) => `
+            <button class="para-role-tab${i === 0 ? ' active' : ''}"
+                    onclick="switchParaRole('${panelId}', '${r.key}', this)">${r.label}</button>
+          `).join('')}
+        </div>
+        <div class="para-chat-messages" id="${panelId}-msgs"></div>
+        <div class="para-chat-input-row">
+          <input class="para-chat-input" id="${panelId}-input"
+                 placeholder="问问角色对这段剧情的想法…"
+                 onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendParaChat('${panelId}')}" />
+          <button class="para-chat-send" onclick="sendParaChat('${panelId}')">发送</button>
+        </div>
+        <div class="para-chat-status" id="${panelId}-status"></div>
+      `
+
+      paraEl.after(panel)
+      panel.querySelector('.para-chat-input').focus()
+    }
+
+    function switchParaRole(panelId, role, btn) {
+      if (!paraChatContexts[panelId]) return
+      paraChatContexts[panelId].role = role
+      paraChatContexts[panelId].history = []
+
+      const panel = document.getElementById(panelId)
+      if (panel) {
+        panel.querySelectorAll('.para-role-tab').forEach(b => b.classList.remove('active'))
+        btn.classList.add('active')
+        const msgs = document.getElementById(`${panelId}-msgs`)
+        if (msgs) msgs.innerHTML = ''
+      }
+    }
+
+    async function sendParaChat(panelId) {
+      const ctx = paraChatContexts[panelId]
+      if (!ctx) return
+
+      const inputEl = document.getElementById(`${panelId}-input`)
+      const msgsEl  = document.getElementById(`${panelId}-msgs`)
+      const statusEl = document.getElementById(`${panelId}-status`)
+      const sendBtn = document.querySelector(`#${panelId} .para-chat-send`)
+
+      const message = inputEl.value.trim()
+      if (!message) return
+
+      // Show user bubble
+      const userDiv = document.createElement('div')
+      userDiv.className = 'para-msg user'
+      userDiv.textContent = message
+      msgsEl.appendChild(userDiv)
+      msgsEl.scrollTop = msgsEl.scrollHeight
+
+      ctx.history.push({ role: 'user', content: message })
+      inputEl.value = ''
+      sendBtn.disabled = true
+      statusEl.textContent = '思考中…'
+
+      // Typing bubble
+      const typingDiv = document.createElement('div')
+      typingDiv.className = 'para-msg assistant'
+      typingDiv.textContent = '…'
+      msgsEl.appendChild(typingDiv)
+      msgsEl.scrollTop = msgsEl.scrollHeight
+
+      try {
+        const resp = await fetch(`${API_BASE_URL}/api/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message,
+            novelTitle: ctx.novelTitle,
+            genre: ctx.genre,
+            novelContent: `【正在讨论的段落】\n${ctx.paraText}\n\n【完整小说内容】\n${novelContents[ctx.novelId] || ''}`,
+            chatHistory: ctx.history,
+            characterRole: ctx.role
+          })
+        })
+
+        typingDiv.remove()
+
+        if (!resp.ok) throw new Error('Chat failed')
+        const data = await resp.json()
+        const reply = data.reply || '…'
+
+        const assistDiv = document.createElement('div')
+        assistDiv.className = 'para-msg assistant'
+        assistDiv.textContent = reply
+        msgsEl.appendChild(assistDiv)
+        ctx.history.push({ role: 'assistant', content: reply })
+
+      } catch (err) {
+        typingDiv.remove()
+        const errDiv = document.createElement('div')
+        errDiv.className = 'para-msg assistant'
+        errDiv.textContent = '抱歉，暂时无法回复… 💔'
+        msgsEl.appendChild(errDiv)
+      } finally {
+        sendBtn.disabled = false
+        statusEl.textContent = ''
+        msgsEl.scrollTop = msgsEl.scrollHeight
+      }
+    }
+
+    window.toggleParaChat = toggleParaChat
+    window.switchParaRole = switchParaRole
+    window.sendParaChat = sendParaChat
 
     // Close modal
     function closeModal() {
